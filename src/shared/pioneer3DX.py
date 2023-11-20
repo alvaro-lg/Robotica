@@ -6,6 +6,9 @@ import cv2
 
 
 class Pioneer3DX:
+    """
+        Class that represents the Pioneer 3DX robot in the simulation.
+    """
 
     # Class-static attributes
     num_sonar: int = 16
@@ -57,7 +60,7 @@ class Pioneer3DX:
         self.__sim.setJointTargetVelocity(self.__right_motor, speed)
         self.__logger.debug(f"Speed of right motor was set to {speed}")
 
-    def _get_motors_speeds(self) -> Tuple[float, float]:
+    def get_motors_speeds(self) -> Tuple[float, float]:
         """
             Gets the speed of the two motors on the robot wheels on the simulation.
             :return: a tuple of two floating point numbers, containing the actual values of each motor.
@@ -66,21 +69,21 @@ class Pioneer3DX:
         right_speed = self.__sim.getJointTargetVelocity(self.__right_motor)
         return left_speed, right_speed
 
-    def _get_lmotor_speeds(self) -> float:
+    def get_lmotor_speeds(self) -> float:
         """
             Gets the speed of the left motor on the robot wheels on the simulation.
             :return: floating point number representing actual speed of the left motor.
         """
         return self.__sim.getJointTargetVelocity(self.__left_motor)
 
-    def _get_rmotor_speeds(self) -> float:
+    def get_rmotor_speeds(self) -> float:
         """
             Gets the speed of the right motor on the robot wheels on the simulation.
             :return: floating point number representing actual speed of the right motor.
         """
         return self.__sim.getJointTargetVelocity(self.__right_motor)
 
-    def _get_sonars_readings(self) -> List[float]:
+    def get_sonars_readings(self) -> List[float]:
         """
             Retrieves a list with the readings of the sonars associated with ths robot.
             :return: a list containing the reading for each sensor.
@@ -95,7 +98,7 @@ class Pioneer3DX:
 
         return readings
 
-    def _get_camera_frame(self) -> np.ndarray:
+    def get_camera_frame(self, contours: bool = False) -> np.ndarray:
         """
             Retrieves the image captured by the robot's camera at execution time.
             :return: a ndarray containing the data of the image captured.
@@ -107,11 +110,29 @@ class Pioneer3DX:
             # Processing image data
             img = np.frombuffer(img, dtype=np.uint8).reshape(resY, resX, 3)
             img = cv2.flip(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), 0)
-            return img
+
+            if not contours:
+                return img
+            else:
+                img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+                # Gen lower mask (0-5) and upper mask (175-180) of RED
+                mask1 = cv2.inRange(img_hsv, np.array([0, 50, 20]), np.array([5, 255, 255]))
+                mask2 = cv2.inRange(img_hsv, np.array([175, 50, 20]), np.array([180, 255, 255]))
+
+                # Merge the mask and crop the red regions
+                mask = cv2.bitwise_or(mask1, mask2)
+                cropped = cv2.bitwise_and(img, img, mask=mask)
+
+                img_r = cropped[:, :, 0]  # Getting only red channel
+                contours, _ = cv2.findContours(img_r, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                img_final = cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
+
+                return img_final
         else:
             raise AttributeError("Undefined self.__camera attribute in __init__() method")
 
-    def _get_lidar_reading(self) -> List[float]:
+    def get_lidar_reading(self) -> List[float]:
         """
             Retrieving data of the lidar sensor on the robot.
         """
@@ -126,14 +147,14 @@ class Pioneer3DX:
 
     # Properties
     @property
-    def sim(self):
+    def _sim(self):
         """
             Getter for the sim private object.
         """
         return self.__sim
 
-    @sim.setter
-    def sim(self, sim) -> None:
+    @_sim.setter
+    def _sim(self, sim) -> None:
         """
             Setter for the sim private object.
             :param sim: new sim object to store.

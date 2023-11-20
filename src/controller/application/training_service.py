@@ -1,5 +1,6 @@
 import logging
 import cv2
+import numpy as np
 
 from controller.infrastructure.coppelia_sim_service import CoppeliaSimService
 from shared.pioneer3DX import Pioneer3DX
@@ -17,17 +18,16 @@ class TrainingService:
         robot = Pioneer3DX(simulation._sim, ROBOT_ID, use_camera=True)
 
         # Starting the simulation
-        simulation._start_simulation()
+        simulation.start_simulation()
 
-        robot._set_motors_speeds((0, 0))
         # Running the simulation
         while simulation.is_running():
-            img = robot._get_camera_frame()
+            img = robot.get_camera_frame(contours=True)
             cv2.imshow('opencv', img)
             cv2.waitKey(1)
 
         # Stopping the simulation
-        simulation._stop_simulation()
+        simulation.stop_simulation()
 
         # Variables destruction
         cv2.destroyAllWindows()
