@@ -1,28 +1,39 @@
-import logging
-from typing import Tuple, List
+import time
+from threading import Thread, Event
 
-import numpy as np
 import cv2
+import logging
+import numpy as np
+
+from typing import Tuple, List
+from shared.actions import MovementAction
+from shared.data_types import CameraReadingData, SonarsReadingsData, LidarReadingData, RobotControllerT, ActionT
+from shared.exceptions import FlippedRobotException
+from shared.state import State
 
 
-class Pioneer3DX:
+class Pioneer3DXConnector:
     """
         Class that represents the Pioneer 3DX robot in the simulation.
     """
 
     # Class-static attributes
     num_sonar: int = 16
-    sonar_max: int = 1.0
+    max_sonar: int = 1
+    max_speed: float = 2.
 
-    def __init__(self, sim, robot_id: str, use_camera: bool = False, use_lidar: bool = False):
+    def __init__(self, sim, robot_id: str, controller: RobotControllerT, use_camera: bool = False,
+                 use_lidar: bool = False):
         # Debugging
         self.__logger: logging.Logger = logging.getLogger('root')
         self.__logger.info(f"Getting handles ({robot_id})")
 
         # Attributes initialization
         self.__sim = sim
+        self.__robot_id: str = robot_id
         self.__left_motor: int = self.__sim.getObject(f'/{robot_id}/leftMotor')
         self.__right_motor: int = self.__sim.getObject(f'/{robot_id}/rightMotor')
+        self.__controller: RobotControllerT = controller
 
         self.__sonars: List[int] = []
         for i in range(self.num_sonar):
@@ -32,12 +43,12 @@ class Pioneer3DX:
             self.__camera: int = self.__sim.getObject(f'/{robot_id}/camera')
 
         if use_lidar:
-            self.__lidar: int = self.__sim.getObject(f'/{robot_id}/lidar')
+            self.__lidar: int = self.__sim.getObject(f'/{robot_id}/lidar_reading')
 
     def _set_motors_speeds(self, speeds: Tuple[float, float]):
         """
             Sets the speed of the two motors on the robot wheels on the simulation.
-            :param speeds: 2-element tuple containing the target speeds of each motor.
+            :param speeds: 2-element tuple containing the target motors_speeds of each motor.
         """
         left_speed, right_speed = speeds
         self.__sim.setJointTargetVelocity(self.__left_motor, left_speed)
@@ -83,9 +94,9 @@ class Pioneer3DX:
         """
         return self.__sim.getJointTargetVelocity(self.__right_motor)
 
-    def get_sonars_readings(self) -> List[float]:
+    def get_sonars_readings(self) -> SonarsReadingsData:
         """
-            Retrieves a list with the readings of the sonars associated with ths robot.
+            Retrieves a list with the readings of the sonars_readings associated with ths robot.
             :return: a list containing the reading for each sensor.
         """
         # List to store readings
@@ -94,16 +105,17 @@ class Pioneer3DX:
         # Getting each reading
         for sonar in self.__sonars:
             res, dist, _, _, _ = self.__sim.readProximitySensor(sonar)
-            readings.append(dist if res == 1 else self.sonar_max)
+            readings.append(dist if res == 1 else self.max_sonar)
 
         return readings
 
-    def get_camera_frame(self, contours: bool = False) -> np.ndarray:
+    def get_camera_reading(self) -> CameraReadingData:
         """
-            Retrieves the image captured by the robot's camera at execution time.
-            :return: a ndarray containing the data of the image captured.
+            Retrieves the image captured by the robot's camera at execution time and also the contour.
+            :return: a ndarray containing the data of the image captured (and optionally another one containing the
+            contours).
         """
-        if hasattr(self, "_Pioneer3DX__camera"):
+        if hasattr(self, "_Pioneer3DXConnector__camera"):
             # Getting raw data of the image
             img, resX, resY = self.__sim.getVisionSensorCharImage(self.__camera)
 
@@ -111,30 +123,13 @@ class Pioneer3DX:
             img = np.frombuffer(img, dtype=np.uint8).reshape(resY, resX, 3)
             img = cv2.flip(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), 0)
 
-            if not contours:
-                return img
-            else:
-                img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-                # Gen lower mask (0-5) and upper mask (175-180) of RED
-                mask1 = cv2.inRange(img_hsv, np.array([0, 50, 20]), np.array([5, 255, 255]))
-                mask2 = cv2.inRange(img_hsv, np.array([175, 50, 20]), np.array([180, 255, 255]))
-
-                # Merge the mask and crop the red regions
-                mask = cv2.bitwise_or(mask1, mask2)
-                cropped = cv2.bitwise_and(img, img, mask=mask)
-
-                img_r = cropped[:, :, 0]  # Getting only red channel
-                contours, _ = cv2.findContours(img_r, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                img_final = cv2.drawContours(img, contours, -1, (0, 255, 0), 3)
-
-                return img_final
+            return img
         else:
             raise AttributeError("Undefined self.__camera attribute in __init__() method")
 
-    def get_lidar_reading(self) -> List[float]:
+    def get_lidar_reading(self) -> LidarReadingData:
         """
-            Retrieving data of the lidar sensor on the robot.
+            Retrieving data of the lidar_reading sensor on the robot.
         """
         if hasattr(self, "_Pioneer3DX__lidar"):
             data = self.__sim.getStringSignal('PioneerP3dxLidarData')
@@ -144,6 +139,44 @@ class Pioneer3DX:
                 return self.__sim.unpackFloatTable(data)
         else:
             raise AttributeError("Undefined self.__lidar attribute in __init__() method")
+
+    def perform_next_action(self) -> None:
+        """
+            Builds up the state and performs the next action in the controller.
+        """
+        # Getting the rotation of the robot and checking if it has turned upside down
+        if self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4:
+            raise FlippedRobotException()
+
+        # Building the state
+        curr_state = State(self.get_camera_reading())
+
+        # Actually performing the action
+        self._perform_action(self._controller.get_next_action(curr_state))
+
+    def _perform_action(self, action: ActionT) -> None:
+        """
+            Performs the action received as parameter.
+            :param action: integer representing the action to perform.
+        """
+        if isinstance(action, MovementAction):
+            self._set_motors_speeds(action.motors_speeds())
+        else:
+            raise TypeError("Unsupported action type")
+
+    def get_rotation(self) -> Tuple[float, float, float]:
+        """
+            Retrieves the rotation of the robot.
+            :return: a tuple containing the rotation of the robot on the three axis.
+        """
+        return self.__sim.getObjectOrientation(self.__sim.getObject(f'/{self.__robot_id}'))
+
+    def get_position(self) -> Tuple[float, float, float]:
+        """
+            Retrieves the position of the robot.
+            :return: a tuple containing the position of the robot on the three axis.
+        """
+        return self.__sim.getObjectPosition(self.__sim.getObject(f'/{self.__robot_id}'))
 
     # Properties
     @property
@@ -160,3 +193,25 @@ class Pioneer3DX:
             :param sim: new sim object to store.
         """
         self.__sim = sim
+
+    @property
+    def robot_id(self):
+        """
+            Getter for the sim private object.
+        """
+        return self.__robot_id
+
+    @property
+    def _controller(self) -> RobotControllerT:
+        """
+            Getter for the controller private object.
+        """
+        return self.__controller
+
+    @_controller.setter
+    def _controller(self, controller: RobotControllerT) -> None:
+        """
+            Setter for the controller private object.
+            :param controller: new controller object to store.
+        """
+        self.__controller = controller

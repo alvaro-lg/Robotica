@@ -1,13 +1,10 @@
 import logging
 import time
 import random
-from statistics import mean
 
-import numpy as np
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
-
-class CoppeliaSimService:
+class CoppeliaSimConnector:
     """
         Class that connects to CoppeliaSim and provides the basic functions for starting, stopping and checking if the
         simulation is still running.
@@ -20,8 +17,9 @@ class CoppeliaSimService:
         """
             Performs initialization of class attributes and connection to CoppeliaSim.
         """
+
         # Debugging
-        self.__logger = logging.getLogger('root')
+        self.__logger: logging.Logger = logging.getLogger('root')
         self.__logger.info("Connecting to CoppeliaSim...")
 
         # Class attributes initialization
@@ -77,17 +75,17 @@ class CoppeliaSimService:
             self.__sim.setObjectPosition(point, pos)
 
     # Properties
-    @property
-    def _sim(self):
+    def sim(self):
         """
             Getter for the sim private object.
         """
         return self.__sim
 
-    @_sim.setter
     def _sim(self, sim) -> None:
         """
             Setter for the sim private object.
             :param sim: new sim object to store.
         """
         self.__sim = sim
+
+    sim = property(fget=sim, fset=_sim)
