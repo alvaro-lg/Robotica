@@ -4,6 +4,7 @@ import random
 
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
+
 class CoppeliaSimConnector:
     """
         Class that connects to CoppeliaSim and provides the basic functions for starting, stopping and checking if the
@@ -27,7 +28,7 @@ class CoppeliaSimConnector:
         self.__sim = client.getObject('sim')
         self.__idle_fps: int = self.__sim.getInt32Param(self.__sim.intparam_idle_fps)
 
-    def start_simulation(self) -> None:
+    def start_simulation(self, shuffle: bool = True) -> None:
         """
             Starts the simulation in CoppeliaSim.
         """
@@ -35,7 +36,8 @@ class CoppeliaSimConnector:
         self.__sim.setObjectPosition(robot, [0, 0, 0.15])
         self.__sim.setInt32Param(self.__idle_fps, 0)
         self.__logger.debug("Shuffling points...")
-        self._shuffle_points()
+        if shuffle:
+            self._shuffle_points()
         self.__logger.debug("Starting simulation...")
         self.__sim.startSimulation()
 

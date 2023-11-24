@@ -4,9 +4,10 @@ from copy import copy
 import cv2
 import numpy as np
 
-from controller.domain.visual_controller import VisualController
-from controller.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
-from controller.infrastructure.pioneer3DX_connector import Pioneer3DXConnector
+from controllers.domain.image_processing_service import ImageProcessingService
+from controllers.domain.visual_controller import VisualController
+from controllers.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
+from controllers.infrastructure.pioneer3DX_connector import Pioneer3DXConnector
 from shared.exceptions import FlippedRobotException
 
 # Constants
@@ -26,7 +27,7 @@ class TrainingService:
 
         try:
             # Starting the simulation
-            simulation.start_simulation()
+            simulation.start_simulation(shuffle=False)
 
             # Running the simulation
             while simulation.is_running():
@@ -35,8 +36,8 @@ class TrainingService:
 
                 # Getting the camera readings, contours and circle
                 img = robot.get_camera_reading()
-                img_contours = VisualController.get_image_contours(copy(img))
-                img_circle = VisualController.get_image_min_circle(copy(img))
+                img_contours = ImageProcessingService.get_image_contours(copy(img))
+                img_circle = ImageProcessingService.get_image_min_circle(copy(img))
 
                 # Stacking the images together
                 img_final = cv2.hconcat([img, img_contours, img_circle])
@@ -49,6 +50,9 @@ class TrainingService:
         except FlippedRobotException:
             # Stopping the simulation
             simulation.stop_simulation()
+
+            # Logging
+            logger.exception("Robot flipped, restarting simulation...")
 
             # Restarting whole service
             TrainingService.run()

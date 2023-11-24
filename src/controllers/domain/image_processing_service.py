@@ -3,34 +3,10 @@ from typing import Sequence, Tuple
 import cv2
 import numpy as np
 
-from controller.infrastructure.pioneer3DX_connector import Pioneer3DXConnector
-from shared.actions import MovementAction
 from shared.data_types import CameraReadingData
-from shared.state import State
 
 
-class VisualController:
-
-    @staticmethod
-    def get_next_action(state: State) -> MovementAction:
-
-        # Getting contours
-        img = state.camera_reading
-        contours = VisualController.get_contours(img)
-
-        if len(contours) > 0:
-            # Extract x-coordinate of the circle center
-            center, _ = VisualController.get_min_circle(img)
-            center_x = center[0]
-            len_x = img.shape[0]
-
-            # Calculate the speed of each wheel
-            left_speed = Pioneer3DXConnector.max_speed * (center_x / len_x)
-            right_speed = Pioneer3DXConnector.max_speed * ((len_x - center_x) / (len_x / 2))
-
-            return MovementAction((left_speed, right_speed))
-        else:
-            return MovementAction((-Pioneer3DXConnector.max_speed / 2, Pioneer3DXConnector.max_speed / 2))
+class ImageProcessingService:
 
     @staticmethod
     def get_contours(img: CameraReadingData) -> Sequence[np.ndarray]:
@@ -55,7 +31,7 @@ class VisualController:
     def get_image_contours(img: CameraReadingData) -> CameraReadingData:
 
         # Getting actual contours
-        contours = VisualController.get_contours(img)
+        contours = ImageProcessingService.get_contours(img)
 
         # Drawing contours on top of image
         cv2.drawContours(img, contours, -1, (255, 0, 0), 2)
@@ -65,7 +41,7 @@ class VisualController:
     def get_min_circle(img: CameraReadingData) -> Tuple[Sequence[int], int]:
 
         # Getting actual contours
-        points = VisualController.get_contours(img)
+        points = ImageProcessingService.get_contours(img)
 
         if len(points) > 0:
             # Convert points to numpy array format
@@ -82,7 +58,7 @@ class VisualController:
     def get_image_min_circle(img: CameraReadingData) -> CameraReadingData:
 
         # Calculating and drawing minimum circle
-        center, radius = VisualController.get_min_circle(img)
+        center, radius = ImageProcessingService.get_min_circle(img)
         cv2.circle(img, center, radius, (0, 255, 0), 2)
 
         return img

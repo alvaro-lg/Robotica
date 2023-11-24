@@ -1,6 +1,3 @@
-import time
-from threading import Thread, Event
-
 import cv2
 import logging
 import numpy as np
@@ -20,7 +17,7 @@ class Pioneer3DXConnector:
     # Class-static attributes
     num_sonar: int = 16
     max_sonar: int = 1
-    max_speed: float = 2.
+    max_speed: float = 4.
 
     def __init__(self, sim, robot_id: str, controller: RobotControllerT, use_camera: bool = False,
                  use_lidar: bool = False):
@@ -33,7 +30,7 @@ class Pioneer3DXConnector:
         self.__robot_id: str = robot_id
         self.__left_motor: int = self.__sim.getObject(f'/{robot_id}/leftMotor')
         self.__right_motor: int = self.__sim.getObject(f'/{robot_id}/rightMotor')
-        self.__controller: RobotControllerT = controller
+        self.__controller: RobotControllerT = controller()
 
         self.__sonars: List[int] = []
         for i in range(self.num_sonar):
@@ -142,7 +139,7 @@ class Pioneer3DXConnector:
 
     def perform_next_action(self) -> None:
         """
-            Builds up the state and performs the next action in the controller.
+            Builds up the state and performs the next action in the controllers.
         """
         # Getting the rotation of the robot and checking if it has turned upside down
         if self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4:
@@ -204,14 +201,14 @@ class Pioneer3DXConnector:
     @property
     def _controller(self) -> RobotControllerT:
         """
-            Getter for the controller private object.
+            Getter for the controllers private object.
         """
         return self.__controller
 
     @_controller.setter
     def _controller(self, controller: RobotControllerT) -> None:
         """
-            Setter for the controller private object.
-            :param controller: new controller object to store.
+            Setter for the controllers private object.
+            :param controller: new controllers object to store.
         """
         self.__controller = controller
