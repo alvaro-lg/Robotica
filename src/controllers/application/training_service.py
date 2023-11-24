@@ -27,7 +27,7 @@ class TrainingService:
 
         try:
             # Starting the simulation
-            simulation.start_simulation(shuffle=False)
+            simulation.start_simulation(shuffle=True)
 
             # Running the simulation
             while simulation.is_running():

@@ -17,7 +17,7 @@ class Pioneer3DXConnector:
     # Class-static attributes
     num_sonar: int = 16
     max_sonar: int = 1
-    max_speed: float = 4.
+    max_speed: float = 3.
 
     def __init__(self, sim, robot_id: str, controller: RobotControllerT, use_camera: bool = False,
                  use_lidar: bool = False):
@@ -47,10 +47,12 @@ class Pioneer3DXConnector:
             Sets the speed of the two motors on the robot wheels on the simulation.
             :param speeds: 2-element tuple containing the target motors_speeds of each motor.
         """
-        left_speed, right_speed = speeds
-        self.__sim.setJointTargetVelocity(self.__left_motor, left_speed)
-        self.__sim.setJointTargetVelocity(self.__right_motor, right_speed)
-        self.__logger.debug(f"Speeds of left and right motors were set to {left_speed} and {right_speed}")
+        # Checking if the speeds are valid
+        if all(isinstance(s, (float, int)) for s in speeds):
+            left_speed, right_speed = speeds
+            self.__sim.setJointTargetVelocity(self.__left_motor, left_speed)
+            self.__sim.setJointTargetVelocity(self.__right_motor, right_speed)
+            self.__logger.debug(f"Speeds of left and right motors were set to {left_speed} and {right_speed}")
 
     def _set_lmotor_speeds(self, speed: float):
         """

@@ -41,12 +41,12 @@ class VisualController:
 
             # Making the robot go slower when is visually closer to the ball
             circle_area = np.pi * (radius ** 2)
-            screen_area = (img.shape[0] * img.shape[1]) * 0.75 # Adjusting to 75% of the screen area
+            screen_area = (img.shape[0] * img.shape[1]) * 0.85 # Adjusting to 85% of the screen area
 
             # Defining the interpolation function
             def interpolation(x: float) -> float:
                 # return np.sin(0.6 * np.pi * (1 - x))          # Sinusoidal
-                return max(1 + np.emath.logn(7, 1 - x), 0)  # Logarithmic
+                return max(1 + np.emath.logn(3, 1 - x), 0)  # Logarithmic
 
             # Interpolating
             new_max_speed = Pioneer3DXConnector.max_speed * interpolation(float(circle_area / screen_area))
