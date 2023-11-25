@@ -5,6 +5,7 @@ import numpy as np
 RobotT = TypeVar('RobotT', bound='Pioneer3DXConnector')
 ActionT = TypeVar('ActionT', bound='MovementAction')
 RobotControllerT = TypeVar('RobotControllerT', bound='VisualController')
+MaskT = TypeVar('MaskT', bound='RedBallMask')
 
 # Custom types
 CameraReadingData = np.ndarray

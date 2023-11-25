@@ -3,25 +3,24 @@ from typing import Sequence, Tuple, Union
 import cv2
 import numpy as np
 
-from shared.data_types import CameraReadingData
+from shared.data_types import CameraReadingData, MaskT
+from shared.masks import RedBallMask
 
 
 class ImageProcessingService:
 
     @staticmethod
-    def get_contours(img: CameraReadingData, ret_mask: bool = False) \
+    def get_contours(img: CameraReadingData, mask: MaskT = RedBallMask, ret_img_mask: bool = False) \
             -> Union[Sequence[np.ndarray], Tuple[Sequence[np.ndarray], CameraReadingData]]:
 
         # To HSV
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        # Gen lower mask (0-5) and upper mask (175-180) of RED
-        mask1 = cv2.inRange(img_hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
-        mask2 = cv2.inRange(img_hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
+        # Masking the image
+        img_masked = mask.mask_image(img_hsv)
 
-        # Merge the mask and crop the red regions
-        mask = cv2.bitwise_or(mask1, mask2)
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # Cropping the red regions
+        contours, _ = cv2.findContours(img_masked, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # Getting the biggest contour
         if len(contours) > 0:
@@ -30,8 +29,8 @@ class ImageProcessingService:
             ret = []
 
         # Adding mask to return
-        if ret_mask:
-            ret = ret, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+        if ret_img_mask:
+            ret = ret, cv2.cvtColor(img_masked, cv2.COLOR_GRAY2BGR)
 
         return ret
 

@@ -36,7 +36,7 @@ class TrainingService:
 
                 # Getting the camera readings, contours and circle
                 img = robot.get_camera_reading()
-                _, img_mask = ImageProcessingService.get_contours(copy(img), ret_mask=True)
+                _, img_mask = ImageProcessingService.get_contours(copy(img), ret_img_mask=True)
                 img_contours = ImageProcessingService.get_image_contours(copy(img))
 
                 # Stacking the images together
