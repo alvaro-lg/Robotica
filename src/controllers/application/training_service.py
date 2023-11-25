@@ -36,11 +36,11 @@ class TrainingService:
 
                 # Getting the camera readings, contours and circle
                 img = robot.get_camera_reading()
+                _, img_mask = ImageProcessingService.get_contours(copy(img), ret_mask=True)
                 img_contours = ImageProcessingService.get_image_contours(copy(img))
-                img_circle = ImageProcessingService.get_image_min_circle(copy(img))
 
                 # Stacking the images together
-                img_final = cv2.hconcat([img, img_contours, img_circle])
+                img_final = cv2.hconcat([img, img_mask, img_contours])
 
                 # Blending the image with the contours and displaying them
                 img_final_s = cv2.resize(img_final, (768, 256), interpolation=cv2.INTER_AREA)

@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 
 import cv2
 import numpy as np
@@ -9,23 +9,31 @@ from shared.data_types import CameraReadingData
 class ImageProcessingService:
 
     @staticmethod
-    def get_contours(img: CameraReadingData) -> Sequence[np.ndarray]:
+    def get_contours(img: CameraReadingData, ret_mask: bool = False) \
+            -> Union[Sequence[np.ndarray], Tuple[Sequence[np.ndarray], CameraReadingData]]:
 
         # To HSV
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # Gen lower mask (0-5) and upper mask (175-180) of RED
-        mask1 = cv2.inRange(img_hsv, np.array([0, 50, 20]), np.array([5, 255, 255]))
-        mask2 = cv2.inRange(img_hsv, np.array([175, 50, 20]), np.array([180, 255, 255]))
+        mask1 = cv2.inRange(img_hsv, np.array([0, 70, 50]), np.array([10, 255, 255]))
+        mask2 = cv2.inRange(img_hsv, np.array([170, 70, 50]), np.array([180, 255, 255]))
 
         # Merge the mask and crop the red regions
         mask = cv2.bitwise_or(mask1, mask2)
-        cropped = cv2.bitwise_and(img, img, mask=mask)
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-        img_r = cropped[:, :, 0]  # Getting only red channel
-        contours, _ = cv2.findContours(img_r, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # Getting the biggest contour
+        if len(contours) > 0:
+            ret = max(contours, key=cv2.contourArea)
+        else:
+            ret = []
 
-        return contours
+        # Adding mask to return
+        if ret_mask:
+            ret = ret, cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+        return ret
 
     @staticmethod
     def get_image_contours(img: CameraReadingData) -> CameraReadingData:
@@ -38,27 +46,26 @@ class ImageProcessingService:
         return img
 
     @staticmethod
-    def get_min_circle(img: CameraReadingData) -> Tuple[Sequence[int], int]:
+    def get_shape(img: CameraReadingData) -> Tuple[Sequence[float], float]:
 
         # Getting actual contours
-        points = ImageProcessingService.get_contours(img)
+        contours = ImageProcessingService.get_contours(img)
 
-        if len(points) > 0:
+        if len(contours) > 0:
             # Convert points to numpy array format
-            points = np.concatenate(points).reshape(-1, 2)
+            contours = np.concatenate(contours).reshape(-1, 2)
 
-            # Find minimum enclosing circle
-            center, radius = cv2.minEnclosingCircle(points)
+            # Find center and area of the shape described by contours
+            M = cv2.moments(contours)
+            area = M['m00']
 
-            return tuple(map(int, center)), int(radius)
+            # No circle
+            if area <= 0:
+                return (-10, -10), 0
+
+            center = M['m10'] / area, M['m01'] / area
+            return center, area
+
         else:
+            # No circle
             return (-10, -10), 0
-
-    @staticmethod
-    def get_image_min_circle(img: CameraReadingData) -> CameraReadingData:
-
-        # Calculating and drawing minimum circle
-        center, radius = ImageProcessingService.get_min_circle(img)
-        cv2.circle(img, center, radius, (0, 255, 0), 2)
-
-        return img

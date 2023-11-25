@@ -12,7 +12,7 @@ from shared.state import State
 class VisualController:
 
     # Static variables
-    idle_speeds: Tuple[int, int] = -1, 1
+    idle_speeds: Tuple[float, float] = -1.5, 1.5
     steps_for_idle: int = 30
 
     def __init__(self):
@@ -35,25 +35,27 @@ class VisualController:
             self.__useless_steps = 0
 
             # Extract x-coordinate of the circle center
-            center, radius = ImageProcessingService.get_min_circle(img)
+            center, area = ImageProcessingService.get_shape(img)
             center_x, center_y = center
             len_x = img.shape[0]
 
             # Making the robot go slower when is visually closer to the ball
-            circle_area = np.pi * (radius ** 2)
-            screen_area = (img.shape[0] * img.shape[1]) * 0.85 # Adjusting to 85% of the screen area
+            screen_area = (img.shape[0] * img.shape[1]) * 0.85  # Adjusting to 85% of the screen area
 
             # Defining the interpolation function
             def interpolation(x: float) -> float:
-                # return np.sin(0.6 * np.pi * (1 - x))          # Sinusoidal
-                return max(1 + np.emath.logn(3, 1 - x), 0)  # Logarithmic
+                return max(1 + np.emath.logn(3, 1 - x), 0)  # Logarithmic interpolation
 
             # Interpolating
-            new_max_speed = Pioneer3DXConnector.max_speed * interpolation(float(circle_area / screen_area))
+            new_max_speed = Pioneer3DXConnector.max_speed * interpolation(float(area / screen_area))
+
+            # Calculating relative normalized distances among x-axis
+            dl = center_x / len_x
+            dr = 1 - (center_x / len_x)
 
             # Calculate the speed of each wheel
-            left_speed = new_max_speed * (max(center_x, len_x / 2) / (len_x / 2))
-            right_speed = new_max_speed * (max((len_x - center_x), len_x / 2) / (len_x / 2))
+            left_speed = new_max_speed * max(dl / 0.5, 0.5)
+            right_speed = new_max_speed * max(dr / 0.5, 0.5)
 
             # Storing last action
             self.__last_action = MovementAction((left_speed, right_speed))
