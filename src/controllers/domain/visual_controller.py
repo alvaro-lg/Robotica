@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from controllers.domain.image_processing_service import ImageProcessingService
-from controllers.infrastructure.pioneer3DX_connector import Pioneer3DXConnector
+from controllers.infrastructure.pioneer_3DX_connector import Pioneer3DXConnector
 from shared.actions import MovementAction
 from shared.data_types import ActionT
 from shared.state import State
@@ -26,32 +26,20 @@ class VisualController:
             :param state: Actual state of the robot.
             :return: The next action to perform.
         """
-        # Getting contours
-        img = state.camera_reading
-        contours = ImageProcessingService.get_contours(img)
+        if state.is_ball_in_sight():
 
-        if len(contours) > 0:
-            # Resetting counter
             self.__useless_steps = 0
-
-            # Extract x-coordinate of the circle center
-            center, area = ImageProcessingService.get_shape(img)
-            center_x, center_y = center
-            len_x = img.shape[0]
-
-            # Making the robot go slower when is visually closer to the ball
-            screen_area = (img.shape[0] * img.shape[1]) * 0.85  # Adjusting to 85% of the screen area
 
             # Defining the interpolation function
             def interpolation(x: float) -> float:
-                return max(1 + np.emath.logn(3, 1 - x), 0)  # Logarithmic interpolation
+                return np.sqrt(1 - x)  # Square root interpolation
 
-            # Interpolating
-            new_max_speed = Pioneer3DXConnector.max_speed * interpolation(float(area / screen_area))
+            # Making the robot go slower when is visually closer to the ball
+            new_max_speed = Pioneer3DXConnector.max_speed * interpolation(state.area_norm)
 
             # Calculating relative normalized distances among x-axis
-            dl = center_x / len_x
-            dr = 1 - (center_x / len_x)
+            dl = state.x_norm
+            dr = 1 - dl
 
             # Calculate the speed of each wheel
             left_speed = new_max_speed * max(dl / 0.5, 0.5)

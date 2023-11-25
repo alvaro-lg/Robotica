@@ -30,7 +30,7 @@ class Pioneer3DXConnector:
         self.__robot_id: str = robot_id
         self.__left_motor: int = self.__sim.getObject(f'/{robot_id}/leftMotor')
         self.__right_motor: int = self.__sim.getObject(f'/{robot_id}/rightMotor')
-        self.__controller: RobotControllerT = controller()
+        self.__controller: RobotControllerT = controller
 
         self.__sonars: List[int] = []
         for i in range(self.num_sonar):

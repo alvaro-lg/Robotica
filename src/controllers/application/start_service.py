@@ -1,34 +1,27 @@
 import logging
 from copy import copy
-from pathlib import Path
 
 import cv2
 
 from controllers.domain.image_processing_service import ImageProcessingService
-from controllers.domain.visual_AI_controller import VisualAIController
 from controllers.domain.visual_controller import VisualController
 from controllers.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
-from controllers.infrastructure.model_repository import ModelRepository
 from controllers.infrastructure.pioneer_3DX_connector import Pioneer3DXConnector
 from shared.exceptions import FlippedRobotException
 
 # Constants
 DEBUG = True
 ROBOT_ID = "PioneerP3DX"
-MODELS_PATH = "models"
-MODEL_NAME = "model_1.keras"
 
 
-class TrainingService:
+class StartService:
 
     @staticmethod
     def run():
 
         # Variables initialization
         simulation: CoppeliaSimConnector = CoppeliaSimConnector()
-        repo = ModelRepository(Path(MODELS_PATH))
-        model = repo.get_model(MODEL_NAME)
-        robot = Pioneer3DXConnector(simulation.sim, ROBOT_ID, VisualAIController(model), use_camera=True)
+        robot = Pioneer3DXConnector(simulation.sim, ROBOT_ID, VisualController(), use_camera=True)
 
         try:
             # Starting the simulation
@@ -61,7 +54,7 @@ class TrainingService:
             logger.exception("Robot flipped, restarting simulation...")
 
             # Restarting whole service
-            TrainingService.run()
+            StartService.run()
 
         except KeyboardInterrupt:
             pass
@@ -84,4 +77,4 @@ if __name__ == '__main__':
         logger.addHandler(handler)
 
     # Actual application startup
-    TrainingService.run()
+    StartService.run()

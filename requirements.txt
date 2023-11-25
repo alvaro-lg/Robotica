@@ -1,6 +1,7 @@
 cbor==1.0.0
 cbor2==5.5.1
-numpy==1.24.4
+numpy==1.24.3
 coppeliasim_zmqremoteapi_client==2.0.0
 opencv-python==4.8.1.78
 pyzmq==25.1.1
+tensorflow==2.13.1

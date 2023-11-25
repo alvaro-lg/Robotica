@@ -1,72 +1,50 @@
 from typing import Optional
 
+from controllers.domain.image_processing_service import ImageProcessingService
 from shared.data_types import CameraReadingData, LidarReadingData, SonarsReadingsData
 
 
 class State:
 
-    def __init__(self, camera_reading: CameraReadingData, lidar_reading: Optional[LidarReadingData] = None,
-                 sonars_readings: Optional[SonarsReadingsData] = None):
+    def __init__(self, camera_reading: CameraReadingData):
 
-        # Class attributes
-        self.__camera_reading: CameraReadingData = camera_reading
+        # Getting contours
+        img = camera_reading
+        contours = ImageProcessingService.get_contours(img)
 
-        # Optional arguments initialization
-        if lidar_reading is not None:
-            self.__lidar_reading: LidarReadingData = lidar_reading
-        if sonars_readings is not None:
-            self.__sonars_readings: SonarsReadingsData = sonars_readings
+        if len(contours) > 0:  # Ball in sight
+            # Extract x-coordinate of the circle center
+            (center_x, center_y), area = ImageProcessingService.get_shape(img)
+            len_x, len_y = img.shape[0], img.shape[1]
 
-    # Properties
-    def camera_reading(self) -> CameraReadingData:
-        """
-            Getter for the camera_reading private object.
-        """
-        return self.__camera_reading
+            # Calculating values
+            self.__x_norm: float = center_x / len_x
+            self.__y_norm: float = center_y / len_y
+            self.__area_norm: float = area / (len_x * len_y)
 
-    def _camera_reading(self, camera_reading: CameraReadingData) -> None:
-        """
-            Setter for the camera_reading private object.
-            :param camera_reading: new camera_reading object to store.
-        """
-        self.__camera_reading = camera_reading
+            self.__ball_in_sight: bool = True  # For speeding up checkings
+        else:  # Ball out of sight
 
-    camera_reading = property(fget=camera_reading, fset=_camera_reading)
+            # Values for ball out of sight
+            self.__x_norm: float = -1.0
+            self.__y_norm: float = -1.0
+            self.__area_norm: float = 0.0
 
-    def lidar_reading(self) -> LidarReadingData:
-        """
-            Getter for the lidar_reading private object.
-        """
-        # Attribute initialization checking
-        if self.__lidar_reading is None:
-            raise AttributeError("Attribute self.__lidar_reading not initialized")
+            self.__ball_in_sight: bool = False  # For speeding up checkings
 
-        return self.__lidar_reading
+    @property
+    def x_norm(self) -> float:
+        return self.__x_norm
 
-    def _lidar_reading(self, lidar: LidarReadingData) -> None:
-        """
-            Setter for the lidar_reading private object.
-            :param lidar: new lidar_reading object to store.
-        """
-        self.__lidar_reading = lidar
+    @property
+    def y_norm(self) -> float:
+        return self.__y_norm
 
-    lidar_reading = property(fget=lidar_reading, fset=_lidar_reading)
+    @property
+    def area_norm(self) -> float:
+        return self.__area_norm
 
-    def sonars_readings(self) -> SonarsReadingsData:
-        """
-            Getter for the sonars_readings private object.
-        """
-        # Attribute initialization checking
-        if self.__sonars_readings is None:
-            raise AttributeError("Attribute self.__sonars_readings not initialized")
+    def is_ball_in_sight(self) -> bool:
+        return self.__ball_in_sight
 
-        return self.__sonars_readings
 
-    def _sonars_readings(self, sonars: SonarsReadingsData) -> None:
-        """
-            Setter for the sonars_readings private object.
-            :param sonars: new sonars_readings object to store.
-        """
-        self.__sonars_readings = sonars
-
-    sonars_readings = property(fget=sonars_readings, fset=_sonars_readings)
