@@ -35,8 +35,8 @@ class CoppeliaSimConnector:
         robot = self.__sim.getObject(f'/PioneerP3DX')
         self.__sim.setObjectPosition(robot, [0, 0, 0.15])
         self.__sim.setInt32Param(self.__idle_fps, 0)
-        self.__logger.debug("Shuffling points...")
         if shuffle:
+            self.__logger.debug("Shuffling points...")
             self._shuffle_points()
         self.__logger.debug("Starting simulation...")
         self.__sim.startSimulation()

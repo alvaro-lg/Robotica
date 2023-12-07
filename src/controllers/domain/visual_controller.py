@@ -42,8 +42,8 @@ class VisualController:
             dr = 1 - dl
 
             # Calculate the speed of each wheel
-            left_speed = new_max_speed * max(dl / 0.5, 0.5)
-            right_speed = new_max_speed * max(dr / 0.5, 0.5)
+            left_speed = new_max_speed * min(dl / 0.5, 1)
+            right_speed = new_max_speed * min(dr / 0.5, 1)
 
             # Storing last action
             self.__last_action = MovementAction((left_speed, right_speed))

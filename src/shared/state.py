@@ -1,7 +1,5 @@
-from typing import Optional
-
 from controllers.domain.image_processing_service import ImageProcessingService
-from shared.data_types import CameraReadingData, LidarReadingData, SonarsReadingsData
+from shared.data_types import CameraReadingData
 
 
 class State:

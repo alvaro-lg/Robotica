@@ -17,7 +17,7 @@ class Pioneer3DXConnector:
     # Class-static attributes
     num_sonar: int = 16
     max_sonar: int = 1
-    max_speed: float = 3.
+    max_speed: float = 5.
 
     def __init__(self, sim, robot_id: str, controller: RobotControllerT, use_camera: bool = False,
                  use_lidar: bool = False):
@@ -144,7 +144,7 @@ class Pioneer3DXConnector:
             Builds up the state and performs the next action in the controllers.
         """
         # Getting the rotation of the robot and checking if it has turned upside down
-        if self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4:
+        if self.is_flipped():
             raise FlippedRobotException()
 
         # Building the state
@@ -152,6 +152,13 @@ class Pioneer3DXConnector:
 
         # Actually performing the action
         self._perform_action(self._controller.get_next_action(curr_state))
+
+    def is_flipped(self):
+        """
+            TODO
+        :return:
+        """
+        return self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4
 
     def _perform_action(self, action: ActionT) -> None:
         """

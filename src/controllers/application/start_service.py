@@ -46,6 +46,12 @@ class StartService:
                     cv2.imshow('Camera View', img_final_s)
                     cv2.waitKey(1)
 
+            # Stopping the simulation
+            simulation.stop_simulation()
+
+            # Variables destruction
+            cv2.destroyAllWindows()
+
         except FlippedRobotException:
             # Stopping the simulation
             simulation.stop_simulation()
@@ -57,13 +63,11 @@ class StartService:
             StartService.run()
 
         except KeyboardInterrupt:
-            pass
+            # Stopping the simulation
+            simulation.stop_simulation()
 
-        # Stopping the simulation
-        simulation.stop_simulation()
-
-        # Variables destruction
-        cv2.destroyAllWindows()
+            # Variables destruction
+            cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
