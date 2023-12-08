@@ -2,6 +2,7 @@ import logging
 import time
 import random
 
+import numpy as np
 from coppeliasim_zmqremoteapi_client import RemoteAPIClient
 
 
@@ -28,16 +29,20 @@ class CoppeliaSimConnector:
         self.__sim = client.getObject('sim')
         self.__idle_fps: int = self.__sim.getInt32Param(self.__sim.intparam_idle_fps)
 
-    def start_simulation(self, shuffle: bool = True) -> None:
+    def start_simulation(self, shuffle_points: bool = True, shuffle_robot: bool = True) -> None:
         """
             Starts the simulation in CoppeliaSim.
         """
         robot = self.__sim.getObject(f'/PioneerP3DX')
         self.__sim.setObjectPosition(robot, [0, 0, 0.15])
+        self.__sim.setObjectOrientation(robot, [0, 0, 0])
         self.__sim.setInt32Param(self.__idle_fps, 0)
-        if shuffle:
+        if shuffle_points:
             self.__logger.debug("Shuffling points...")
             self._shuffle_points()
+        if shuffle_robot:
+            self.__logger.debug("Shuffling robot...")
+            self._shuffle_robot()
         self.__logger.debug("Starting simulation...")
         self.__sim.startSimulation()
 
@@ -75,6 +80,21 @@ class CoppeliaSimConnector:
         # Setting the new positions
         for point, pos in zip(points, positions):
             self.__sim.setObjectPosition(point, pos)
+
+    def _shuffle_robot(self) -> None:
+        """
+            Shuffles the position of the robot in the simulation.
+        """
+        robot = self.__sim.getObject(f'/PioneerP3DX')
+        self.__sim.setObjectOrientation(robot, [0, 0, random.uniform(0, np.pi)])
+        self.__sim.setObjectPosition(robot, [random.uniform(-3.5, 3.5), random.uniform(-3.5, 3.5), 0.12])
+
+    def get_time(self) -> float:
+        """
+            Returns the current simulation time.
+            :return: float: current simulation time.
+        """
+        return self.__sim.getSimulationTime()
 
     # Properties
     def sim(self):

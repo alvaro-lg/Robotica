@@ -35,13 +35,13 @@ class VisualController:
                 return np.sqrt(1 - x)  # Square root interpolation
 
             # Making the robot go slower when is visually closer to the ball
-            new_max_speed = Pioneer3DXConnector.max_speed * interpolation(state.area_norm)
+            new_max_speed = interpolation(state.area_norm)
 
             # Calculating relative normalized distances among x-axis
             dl = state.x_norm
             dr = 1 - dl
 
-            # Calculate the speed of each wheel
+            # Calculate the speed_ratio of each wheel
             left_speed = new_max_speed * min(dl / 0.5, 1)
             right_speed = new_max_speed * min(dr / 0.5, 1)
 

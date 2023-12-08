@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 
+from shared.actions import MovementActionFactory
 from shared.data_types import AIModel
 
 import tensorflow as tf
@@ -22,14 +23,14 @@ class ModelFactory:
         input_ = tf.keras.layers.Input(shape=(1, 3), dtype=tf.float64, name="input")
 
         # Appending all the layers of the model in a list
-        model_layers = [tf.keras.layers.Dense(32, activation='relu', name="dense_1"),
-                        tf.keras.layers.Dense(32, activation='relu', name="dense_2"),
+        model_layers = [tf.keras.layers.Dense(64, activation='relu', name="dense_1"),
+                        tf.keras.layers.Dense(64, activation='relu', name="dense_2"),
                         tf.keras.layers.Dropout(.75, input_shape=(32, 1), name="dropout_1"),
-                        tf.keras.layers.Dense(16, activation='relu', name="s_dense_1"),
-                        tf.keras.layers.Dense(8, activation='relu', name="s_dense_2"),
+                        tf.keras.layers.Dense(32, activation='relu', name="s_dense_1"),
+                        tf.keras.layers.Dense(16, activation='relu', name="s_dense_2"),
                         tf.keras.layers.Dropout(.5, input_shape=(8, 1), name="dropout_2"),
-                        tf.keras.layers.Dense(4, activation='relu', name="xs_dense"),
-                        tf.keras.layers.Dense(2, activation='tanh', name="output")]
+                        tf.keras.layers.Dense(8, activation='relu', name="xs_dense"),
+                        tf.keras.layers.Dense(MovementActionFactory.N_ACTIONS, activation='linear', name='output')]
 
         # Composing all the layers of the model
         out_ = input_

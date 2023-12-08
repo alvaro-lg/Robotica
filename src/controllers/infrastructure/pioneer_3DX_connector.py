@@ -4,7 +4,7 @@ import numpy as np
 
 from typing import Tuple, List
 from shared.actions import MovementAction
-from shared.data_types import CameraReadingData, SonarsReadingsData, LidarReadingData, RobotControllerT, ActionT
+from shared.data_types import CameraReadingData, SonarsReadingsData, LidarReadingData, RobotControllerT, ActionT, StateT
 from shared.exceptions import FlippedRobotException
 from shared.state import State
 
@@ -42,54 +42,54 @@ class Pioneer3DXConnector:
         if use_lidar:
             self.__lidar: int = self.__sim.getObject(f'/{robot_id}/lidar_reading')
 
-    def _set_motors_speeds(self, speeds: Tuple[float, float]):
+    def _set_motors_speeds_ratio(self, speeds_ratios: Tuple[float, float]):
         """
-            Sets the speed of the two motors on the robot wheels on the simulation.
-            :param speeds: 2-element tuple containing the target motors_speeds of each motor.
+            Sets the speed_ratio of the two motors on the robot wheels on the simulation.
+            :param speeds_ratios: 2-element tuple containing the target motors_speeds of each motor.
         """
-        # Checking if the speeds are valid
-        if all(isinstance(s, (float, int)) for s in speeds):
-            left_speed, right_speed = speeds
-            self.__sim.setJointTargetVelocity(self.__left_motor, left_speed)
-            self.__sim.setJointTargetVelocity(self.__right_motor, right_speed)
+        # Checking if the speeds_ratios are valid
+        if all(isinstance(s, (float, int)) for s in speeds_ratios):
+            left_speed, right_speed = speeds_ratios
+            self.__sim.setJointTargetVelocity(self.__left_motor, left_speed * Pioneer3DXConnector.max_speed)
+            self.__sim.setJointTargetVelocity(self.__right_motor, right_speed * Pioneer3DXConnector.max_speed)
             self.__logger.debug(f"Speeds of left and right motors were set to {left_speed} and {right_speed}")
 
-    def _set_lmotor_speeds(self, speed: float):
+    def _set_lmotor_speed_ratio(self, speed: float):
         """
-            Sets the speed of the left motor on the robot wheels on the simulation.
-            :param speed: floating point number representing target speed.
+            Sets the speed_ratio of the left motor on the robot wheels on the simulation.
+            :param speed: floating point number representing target speed_ratio.
         """
-        self.__sim.setJointTargetVelocity(self.__left_motor, speed)
+        self.__sim.setJointTargetVelocity(self.__left_motor, speed * Pioneer3DXConnector.max_speed)
         self.__logger.debug(f"Speed of left motor was set to {speed}")
 
-    def _set_rmotor_speeds(self, speed: float):
+    def _set_rmotor_speed_ratio(self, speed_ratio: float):
         """
             Sets the speed of the right motor on the robot wheels on the simulation.
-            :param speed: floating point number representing target speed.
+            :param speed_ratio: floating point number representing target speed.
         """
-        self.__sim.setJointTargetVelocity(self.__right_motor, speed)
-        self.__logger.debug(f"Speed of right motor was set to {speed}")
+        self.__sim.setJointTargetVelocity(self.__right_motor, speed_ratio * Pioneer3DXConnector.max_speed)
+        self.__logger.debug(f"Speed of right motor was set to {speed_ratio}")
 
-    def get_motors_speeds(self) -> Tuple[float, float]:
+    def get_motors_speeds_ratio(self) -> Tuple[float, float]:
         """
-            Gets the speed of the two motors on the robot wheels on the simulation.
+            Gets the speed_ratio of the two motors on the robot wheels on the simulation.
             :return: a tuple of two floating point numbers, containing the actual values of each motor.
         """
         left_speed = self.__sim.getJointTargetVelocity(self.__left_motor)
         right_speed = self.__sim.getJointTargetVelocity(self.__right_motor)
         return left_speed, right_speed
 
-    def get_lmotor_speeds(self) -> float:
+    def get_lmotor_speed_ratio(self) -> float:
         """
-            Gets the speed of the left motor on the robot wheels on the simulation.
-            :return: floating point number representing actual speed of the left motor.
+            Gets the speed_ratio of the left motor on the robot wheels on the simulation.
+            :return: floating point number representing actual speed_ratio of the left motor.
         """
         return self.__sim.getJointTargetVelocity(self.__left_motor)
 
-    def get_rmotor_speeds(self) -> float:
+    def get_rmotor_speed_ratio(self) -> float:
         """
-            Gets the speed of the right motor on the robot wheels on the simulation.
-            :return: floating point number representing actual speed of the right motor.
+            Gets the speed_ratio of the right motor on the robot wheels on the simulation.
+            :return: floating point number representing actual speed_ratio of the right motor.
         """
         return self.__sim.getJointTargetVelocity(self.__right_motor)
 
@@ -151,22 +151,22 @@ class Pioneer3DXConnector:
         curr_state = State(self.get_camera_reading())
 
         # Actually performing the action
-        self._perform_action(self._controller.get_next_action(curr_state))
+        self.perform_action(self._controller.get_next_action(curr_state))
 
-    def is_flipped(self):
+    def is_flipped(self) -> bool:
         """
-            TODO
-        :return:
+            Checks whether the robot has turned upside down.
+            :return: boolean: True if it has turned upside down, False otherwise.
         """
         return self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4
 
-    def _perform_action(self, action: ActionT) -> None:
+    def perform_action(self, action: ActionT) -> None:
         """
             Performs the action received as parameter.
             :param action: integer representing the action to perform.
         """
         if isinstance(action, MovementAction):
-            self._set_motors_speeds(action.motors_speeds())
+            self._set_motors_speeds_ratio(action.motors_speeds)
         else:
             raise TypeError("Unsupported action type")
 
@@ -183,6 +183,13 @@ class Pioneer3DXConnector:
             :return: a tuple containing the position of the robot on the three axis.
         """
         return self.__sim.getObjectPosition(self.__sim.getObject(f'/{self.__robot_id}'))
+
+    def get_state(self) -> StateT:
+        """
+            Retrieves the state of the robot.
+            :return: a tuple containing the position of the robot on the three axis.
+        """
+        return State(self.get_camera_reading())
 
     # Properties
     @property

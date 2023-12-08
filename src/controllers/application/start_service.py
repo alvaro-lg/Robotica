@@ -25,7 +25,7 @@ class StartService:
 
         try:
             # Starting the simulation
-            simulation.start_simulation(shuffle=True)
+            simulation.start_simulation(shuffle_points=True)
 
             # Running the simulation
             while simulation.is_running():
