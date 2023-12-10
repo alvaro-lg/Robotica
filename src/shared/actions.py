@@ -54,14 +54,17 @@ class MovementActionFactory:
 
     # Static attributes
     N_X_STEPS: int = 8
-    N_ACTIONS: int = N_X_STEPS
+    N_ACTIONS: int = 2 * N_X_STEPS
     _action_space: List[MovementAction] = None
 
     @classmethod
     def create_action_space(cls):
         cls._action_space = [
             MovementAction((float(min(i / 0.5, 1)), float(min((1 - i) / 0.5, 1))))
-            for i in np.arange(0, 1, 1 / cls.N_X_STEPS)]
+            for i in np.arange(0, 1, 1 / cls.N_X_STEPS)] + [
+            MovementAction((-float(min(i / 0.5, 1)), -float(min((1 - i) / 0.5, 1))))
+            for i in np.arange(0, 1, 1 / cls.N_X_STEPS)
+        ]
 
     @staticmethod
     def get_random_enum_action() -> EnumeratedMovementAction:

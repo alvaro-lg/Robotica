@@ -15,12 +15,6 @@ class RewardService:
         Returns the reward for the given state, action and next state.
         """
         if not state.is_ball_in_sight():
-            if next_state.is_ball_in_sight():
-                return 2
-            else:
-                return 0
+            return 0
         else:
-            if next_state.is_ball_in_sight():
-                return 1 + math.ceil(5 * min(next_state.area_norm / RewardService.TARGET_AREA, 1))
-            else:
-                return -1
+            return 1 + math.ceil(5 * min(next_state.area_norm / RewardService.TARGET_AREA, 1))

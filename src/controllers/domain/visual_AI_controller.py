@@ -6,7 +6,7 @@ from typing import Tuple, Optional, Any
 import numpy as np
 
 from controllers.domain.visual_controller import VisualController
-from shared.actions import MovementActionFactory
+from shared.actions import MovementActionFactory, MovementAction, EnumeratedMovementAction
 from shared.data_types import AIModel, TransitionT
 from shared.state import State
 
@@ -109,6 +109,9 @@ class VisualAIController(VisualController):
         if self.__target_update_counter > UPDATE_TARGET_EVERY:
             self.__target_model.set_weights(self.__model.get_weights())
             self.__target_update_counter = 0
+
+    def get_next_action(self, state: State) -> MovementAction:
+        return EnumeratedMovementAction(np.argmax(self.get_prediction(state)))
 
     # Properties
     @property

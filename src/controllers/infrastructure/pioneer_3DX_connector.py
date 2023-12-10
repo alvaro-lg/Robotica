@@ -21,6 +21,7 @@ class Pioneer3DXConnector:
 
     def __init__(self, sim, robot_id: str, controller: RobotControllerT, use_camera: bool = False,
                  use_lidar: bool = False):
+
         # Debugging
         self.__logger: logging.Logger = logging.getLogger('root')
         self.__logger.info(f"Getting handles ({robot_id})")
@@ -52,7 +53,9 @@ class Pioneer3DXConnector:
             left_speed, right_speed = speeds_ratios
             self.__sim.setJointTargetVelocity(self.__left_motor, left_speed * Pioneer3DXConnector.max_speed)
             self.__sim.setJointTargetVelocity(self.__right_motor, right_speed * Pioneer3DXConnector.max_speed)
-            self.__logger.debug(f"Speeds of left and right motors were set to {left_speed} and {right_speed}")
+            self.__logger.debug(f"Speeds of left and right motors were set to "
+                                f"{left_speed * Pioneer3DXConnector.max_speed} and "
+                                f"{right_speed * Pioneer3DXConnector.max_speed}")
 
     def _set_lmotor_speed_ratio(self, speed: float):
         """
@@ -60,7 +63,7 @@ class Pioneer3DXConnector:
             :param speed: floating point number representing target speed_ratio.
         """
         self.__sim.setJointTargetVelocity(self.__left_motor, speed * Pioneer3DXConnector.max_speed)
-        self.__logger.debug(f"Speed of left motor was set to {speed}")
+        self.__logger.debug(f"Speed of left motor was set to {speed * Pioneer3DXConnector.max_speed}")
 
     def _set_rmotor_speed_ratio(self, speed_ratio: float):
         """
@@ -68,7 +71,7 @@ class Pioneer3DXConnector:
             :param speed_ratio: floating point number representing target speed.
         """
         self.__sim.setJointTargetVelocity(self.__right_motor, speed_ratio * Pioneer3DXConnector.max_speed)
-        self.__logger.debug(f"Speed of right motor was set to {speed_ratio}")
+        self.__logger.debug(f"Speed of right motor was set to {speed_ratio * Pioneer3DXConnector.max_speed}")
 
     def get_motors_speeds_ratio(self) -> Tuple[float, float]:
         """

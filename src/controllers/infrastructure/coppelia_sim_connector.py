@@ -26,25 +26,32 @@ class CoppeliaSimConnector:
 
         # Class attributes initialization
         client = RemoteAPIClient()
-        self.__sim = client.getObject('sim')
+        self.__sim = client.require('sim')
         self.__idle_fps: int = self.__sim.getInt32Param(self.__sim.intparam_idle_fps)
 
     def start_simulation(self, shuffle_points: bool = True, shuffle_robot: bool = True) -> None:
         """
             Starts the simulation in CoppeliaSim.
         """
-        robot = self.__sim.getObject(f'/PioneerP3DX')
-        self.__sim.setObjectPosition(robot, [0, 0, 0.15])
-        self.__sim.setObjectOrientation(robot, [0, 0, 0])
+        self.__logger.debug("Starting simulation...")
         self.__sim.setInt32Param(self.__idle_fps, 0)
+        self.__sim.startSimulation()
+
+    def reset_simulation(self, shuffle_points: bool = True, shuffle_robot: bool = True) -> None:
+        """
+            Starts the simulation in CoppeliaSim.
+        """
+        self.__logger.debug("Resetting simulation...")
+        robot = self.__sim.getObject(f'/PioneerP3DX')
         if shuffle_points:
             self.__logger.debug("Shuffling points...")
             self._shuffle_points()
         if shuffle_robot:
             self.__logger.debug("Shuffling robot...")
             self._shuffle_robot()
-        self.__logger.debug("Starting simulation...")
-        self.__sim.startSimulation()
+        else:
+            self.__sim.setObjectPosition(robot, [0, 0, 0.15])
+            self.__sim.setObjectOrientation(robot, [0, 0, 0])
 
     def stop_simulation(self) -> None:
         """
@@ -87,7 +94,7 @@ class CoppeliaSimConnector:
         """
         robot = self.__sim.getObject(f'/PioneerP3DX')
         self.__sim.setObjectOrientation(robot, [0, 0, random.uniform(0, np.pi)])
-        self.__sim.setObjectPosition(robot, [random.uniform(-3.5, 3.5), random.uniform(-3.5, 3.5), 0.12])
+        self.__sim.setObjectPosition(robot, [0, 0, 0.15])
 
     def get_time(self) -> float:
         """

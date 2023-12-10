@@ -1,27 +1,42 @@
 import logging
+import os
 from copy import copy
+from pathlib import Path
+from typing import Optional
 
 import cv2
 
 from controllers.domain.image_processing_service import ImageProcessingService
+from controllers.domain.visual_AI_controller import VisualAIController
 from controllers.domain.visual_controller import VisualController
 from controllers.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
+from controllers.infrastructure.model_repository import ModelRepository
 from controllers.infrastructure.pioneer_3DX_connector import Pioneer3DXConnector
+from shared.actions import MovementActionFactory
 from shared.exceptions import FlippedRobotException
 
 # Constants
 DEBUG = True
+DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
+MODEL_NAME = "1000_90_bcde40f5-c3b4-4301-b32b-d5da0f54810f.keras"
+MODELS_PATH = Path("models/Trained/V1")
 
 
 class StartService:
 
     @staticmethod
-    def run():
+    def run(models_path: Optional[Path] = MODELS_PATH, model_name: Optional[str] = None):
 
         # Variables initialization
         simulation: CoppeliaSimConnector = CoppeliaSimConnector()
-        robot = Pioneer3DXConnector(simulation.sim, ROBOT_ID, VisualController(), use_camera=True)
+        if model_name is None:
+            robot = Pioneer3DXConnector(simulation.sim, ROBOT_ID, VisualController(), use_camera=True)
+        else:
+            robot = Pioneer3DXConnector(simulation.sim, ROBOT_ID,
+                                        VisualAIController(ModelRepository(models_path).get_model(model_name)),
+                                        use_camera=True)
+            MovementActionFactory.create_action_space()
 
         try:
             # Starting the simulation
@@ -32,7 +47,7 @@ class StartService:
                 # Performing the next action
                 robot.perform_next_action()
 
-                if DEBUG:
+                if DISPLAY:
                     # Getting the camera readings, contours and circle
                     img = robot.get_camera_reading()
                     _, img_mask = ImageProcessingService.get_contours(copy(img), ret_img_mask=True)
@@ -81,4 +96,4 @@ if __name__ == '__main__':
         logger.addHandler(handler)
 
     # Actual application startup
-    StartService.run()
+    StartService.run(model_name=MODEL_NAME)

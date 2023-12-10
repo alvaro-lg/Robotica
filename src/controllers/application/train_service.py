@@ -31,10 +31,10 @@ N_EPISODES = 1000
 MEM_SIZE = 3000
 MAX_EPSILON = 1  # Maximum epsilon value
 MIN_EPSILON = 0.001  # Minimum epsilon value
-EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
+EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.6 * N_EPISODES))
 AGGREGATE_STATS_EVERY = 1
-SAVE_MODEL_EVERY = 10
-MAX_TIME = 60
+SAVE_MODEL_EVERY = 20
+MAX_TIME = 90
 
 
 class TrainService:
@@ -58,29 +58,29 @@ class TrainService:
         avg_reward_info = [[1, best_average, epsilon]]  # [episode_n, reward_n , epsilon_n]
         max_reward_info = [[1, best_score, epsilon]]  # [episode_n, reward_n , epsilon_n]
 
-        def end_episode() -> bool:
+        def end_episode(n_episode: int) -> bool:
             """
                 Checks whether the episode has ended.
                 :return: boolean: True if it has ended, False otherwise.
             """
-            return robot.is_flipped() or (simulation.get_time() > MAX_TIME)
+            return robot.is_flipped() or (simulation.get_time() > MAX_TIME * n_episode)
+
+        simulation.start_simulation()
 
         try:
-
             # Iterate over episodes
             for episode in tqdm(range(1, N_EPISODES + 1), ascii=True, unit='episodes'):
-
                 try:
 
                     # Reset environment and get initial state
-                    simulation.start_simulation(shuffle_points=False)
+                    simulation.reset_simulation(shuffle_points=False)
                     curr_state = robot.get_state()
 
                     # Restarting episode - reset episode reward and step number
                     episode_reward = 0
                     step = 1
 
-                    while not end_episode():
+                    while not end_episode(episode + 1):
 
                         if DISPLAY:
                             # Getting the camera readings, contours and circle
@@ -112,7 +112,7 @@ class TrainService:
                         episode_reward += reward
 
                         # Every step we update replay memory and train main network
-                        controller.update_replay_memory((curr_state, enum_action, reward, new_state, end_episode()))
+                        controller.update_replay_memory((curr_state, enum_action, reward, new_state, end_episode(episode + 1)))
 
                         curr_state = new_state
                         step += 1
@@ -120,11 +120,10 @@ class TrainService:
                         ep_rewards.append(episode_reward)
                     else:
                         # Stopping the simulation
-                        simulation.stop_simulation()
                         logger.info(f"Episode: {episode} - Reward: {episode_reward} - Epsilon: {epsilon}")
 
                         # TODO Ver si poner aqui
-                        controller.train(end_episode())
+                        controller.train(end_episode(episode + 1))
 
                     # Saving stats and saving model if proceeds
                     if not episode % AGGREGATE_STATS_EVERY:
@@ -158,8 +157,6 @@ class TrainService:
             pass
 
         logger.debug(ep_rewards)
-
-        # Stopping the simulation
         simulation.stop_simulation()
 
         # Variables destruction
