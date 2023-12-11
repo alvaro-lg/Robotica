@@ -2,10 +2,10 @@ import cv2
 import logging
 import numpy as np
 
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from shared.actions import MovementAction
 from shared.data_types import CameraReadingData, SonarsReadingsData, LidarReadingData, RobotControllerT, ActionT, StateT
-from shared.exceptions import FlippedRobotException
+from shared.exceptions import FlippedRobotException, WallHitException
 from shared.state import State
 
 
@@ -142,7 +142,7 @@ class Pioneer3DXConnector:
         else:
             raise AttributeError("Undefined self.__lidar attribute in __init__() method")
 
-    def perform_next_action(self) -> None:
+    def perform_next_action(self, action: Optional[ActionT] = None) -> None:
         """
             Builds up the state and performs the next action in the controllers.
         """
@@ -150,11 +150,17 @@ class Pioneer3DXConnector:
         if self.is_flipped():
             raise FlippedRobotException()
 
+        if self.is_hitting_a_wall():
+            raise WallHitException()
+
         # Building the state
         curr_state = State(self.get_camera_reading())
 
         # Actually performing the action
-        self.perform_action(self._controller.get_next_action(curr_state))
+        if action is None:
+            self._perform_action(self._controller.get_next_action(curr_state))
+        else:
+            self._perform_action(action)
 
     def is_flipped(self) -> bool:
         """
@@ -163,7 +169,19 @@ class Pioneer3DXConnector:
         """
         return self.get_rotation()[0] < - np.pi / 4 or self.get_rotation()[0] > np.pi / 4
 
-    def perform_action(self, action: ActionT) -> None:
+    def is_hitting_a_wall(self) -> bool:
+        """
+            Checks whether the robot is hitting a wall.
+            :return: boolean: True if it is hitting a wall, False otherwise.
+        """
+        # TODO Implement with proper API functions
+        x, y, _ = self.get_position()
+        if x < -3.65 or x > 3.65 or y < -3.65 or y > 3.65:
+            return True
+        else:
+            return False
+
+    def _perform_action(self, action: ActionT) -> None:
         """
             Performs the action received as parameter.
             :param action: integer representing the action to perform.

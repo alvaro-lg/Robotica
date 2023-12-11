@@ -16,7 +16,7 @@ from controllers.infrastructure.model_factory import ModelFactory
 from controllers.infrastructure.model_repository import ModelRepository
 from controllers.infrastructure.pioneer_3DX_connector import Pioneer3DXConnector
 from shared.actions import MovementAction, MovementActionFactory, EnumeratedMovementAction
-from shared.exceptions import FlippedRobotException
+from shared.exceptions import FlippedRobotException, WallHitException
 from shared.state import State
 
 # Constants
@@ -31,7 +31,7 @@ N_EPISODES = 1000
 MEM_SIZE = 3000
 MAX_EPSILON = 1  # Maximum epsilon value
 MIN_EPSILON = 0.001  # Minimum epsilon value
-EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.6 * N_EPISODES))
+EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
 AGGREGATE_STATS_EVERY = 1
 SAVE_MODEL_EVERY = 20
 MAX_TIME = 90
@@ -104,7 +104,7 @@ class TrainService:
                             # Get random action
                             enum_action = MovementActionFactory.get_random_enum_action()
 
-                        robot.perform_action(enum_action)
+                        robot.perform_next_action(enum_action)
                         new_state = State(robot.get_camera_reading())
                         reward = RewardService.get_reward(curr_state, enum_action, new_state)
 
@@ -152,6 +152,10 @@ class TrainService:
 
                 except FlippedRobotException:
                     continue
+
+                except WallHitException:
+                    simulation.reset_simulation(shuffle_points=False)
+                    pass
 
         except KeyboardInterrupt:
             pass

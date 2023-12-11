@@ -53,7 +53,7 @@ class EnumeratedMovementAction(MovementAction):
 class MovementActionFactory:
 
     # Static attributes
-    N_X_STEPS: int = 8
+    N_X_STEPS: int = 5
     N_ACTIONS: int = 2 * N_X_STEPS
     _action_space: List[MovementAction] = None
 

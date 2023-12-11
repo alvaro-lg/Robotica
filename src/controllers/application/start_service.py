@@ -19,8 +19,8 @@ from shared.exceptions import FlippedRobotException
 DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
-MODEL_NAME = "1000_90_bcde40f5-c3b4-4301-b32b-d5da0f54810f.keras"
-MODELS_PATH = Path("models/Trained/V1")
+MODEL_NAME = "1000_90_e9d995e0-ef5b-4c96-b772-c766905e61a8.keras"
+MODELS_PATH = Path("models/Trained/V2")
 
 
 class StartService:
@@ -40,7 +40,8 @@ class StartService:
 
         try:
             # Starting the simulation
-            simulation.start_simulation(shuffle_points=True)
+            simulation.start_simulation()
+            simulation.reset_simulation(shuffle_points=False)
 
             # Running the simulation
             while simulation.is_running():
@@ -96,4 +97,4 @@ if __name__ == '__main__':
         logger.addHandler(handler)
 
     # Actual application startup
-    StartService.run(model_name=MODEL_NAME)
+    StartService.run(model_name=None)
