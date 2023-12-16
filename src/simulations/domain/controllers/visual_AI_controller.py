@@ -1,12 +1,12 @@
 from collections import deque
 from copy import deepcopy
 import random
-from typing import Tuple, Optional, Any
+from typing import Optional, Any
 
 import numpy as np
 
-from controllers.domain.visual_controller import VisualController
-from shared.actions import MovementActionFactory, MovementAction, EnumeratedMovementAction
+from simulations.domain.controllers.visual_controller import VisualController
+from shared.actions import MovementAction
 from shared.data_types import AIModel, TransitionT
 from shared.state import State
 
@@ -101,17 +101,17 @@ class VisualAIController(VisualController):
         # Fit on all samples as one batch, log only on terminal state
         self.__model.fit(x=np.array(X), y=np.array(y), batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False)
 
-        # Update target network counter every episode
+        # Update target_area network counter every episode
         if terminal_state:
             self.__target_update_counter += 1
 
-        # If counter reaches set value, update target network with weights of main network
+        # If counter reaches set value, update target_area network with weights of main network
         if self.__target_update_counter > UPDATE_TARGET_EVERY:
             self.__target_model.set_weights(self.__model.get_weights())
             self.__target_update_counter = 0
 
     def get_next_action(self, state: State) -> MovementAction:
-        return EnumeratedMovementAction(np.argmax(self.get_prediction(state)))
+        return MovementAction(np.argmax(self.get_prediction(state)))
 
     # Properties
     @property

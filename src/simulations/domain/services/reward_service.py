@@ -6,7 +6,7 @@ from shared.state import State
 
 class RewardService:
     # Static variables
-    TARGET_AREA: float = 0.75
+    target_area: float = 0.75
 
     @staticmethod
     def get_reward(state: State, action: MovementAction, next_state: State) -> int:
@@ -17,7 +17,7 @@ class RewardService:
             return 0
         else:
             if next_state.is_ball_in_sight():
-                return math.ceil(20 * ((min(next_state.area_norm / RewardService.TARGET_AREA, 1) +
+                return math.ceil(20 * ((min(next_state.area_norm / RewardService.target_area, 1) +
                                         (abs(next_state.x_norm - 0.5) / 0.5))) / 2)
             else:
                 return -10

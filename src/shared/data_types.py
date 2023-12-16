@@ -3,8 +3,8 @@ import numpy as np
 import tensorflow as tf
 
 
-# Typing
-RobotT = TypeVar('RobotT', bound='Pioneer3DXConnector')
+# Type hinting
+RobotT = TypeVar('RobotT', bound='Pioneer3DX')
 ActionT = TypeVar('ActionT', bound='MovementAction')
 StateT = TypeVar('StateT', bound='State')
 RobotControllerT = TypeVar('RobotControllerT', bound='VisualController')

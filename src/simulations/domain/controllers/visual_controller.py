@@ -2,14 +2,13 @@ from typing import Tuple
 
 import numpy as np
 
-from controllers.domain.image_processing_service import ImageProcessingService
-from controllers.infrastructure.pioneer_3DX_connector import Pioneer3DXConnector
 from shared.actions import MovementAction
 from shared.data_types import ActionT
+from shared.domain.interfaces.controller import Controller
 from shared.state import State
 
 
-class VisualController:
+class VisualController(Controller):
 
     # Static variables
     idle_speeds: Tuple[float, float] = -1.5, 1.5

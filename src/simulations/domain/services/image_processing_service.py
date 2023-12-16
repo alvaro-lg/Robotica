@@ -51,7 +51,7 @@ class ImageProcessingService:
         contours = ImageProcessingService.get_contours(img)
 
         if len(contours) > 0:
-            # Convert points to numpy array format
+            # Convert points_ids to numpy array format
             contours = np.concatenate(contours).reshape(-1, 2)
 
             # Find center and area of the shape described by contours

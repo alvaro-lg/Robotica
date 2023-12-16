@@ -1,5 +1,4 @@
 import logging
-import os
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -7,11 +6,19 @@ from typing import Optional
 import tensorflow as tf
 
 from shared.data_types import AIModel
+from shared.infrastructure.interfaces.repository import Repository
 
 
-class ModelRepository:
+class ModelRepository(Repository):
+    """
+        Class that represents the repository for models.
+    """
 
     def __init__(self, base_dir: Path):
+        """
+            Constructor method.
+            :param base_dir: Path object representing the base directory of the repository.
+        """
         # Debugging
         self.__logger: logging.Logger = logging.getLogger('root')
 
@@ -22,12 +29,12 @@ class ModelRepository:
             raise FileExistsError(f"Base directory {base_dir} is not a directory")
 
         # Attributes initialization
-        self.__base_dir = base_dir.resolve()
+        self.__base_dir: Path = base_dir.resolve()
 
-    def get_model(self, filename: str) -> AIModel:
+    def load(self, filename: str) -> AIModel:
         """
             Loads a model from a file.
-            :param filename: string representing the name of the model file.
+            :param filename: string representing the filename of the model file.
             :return: AIModel object representing the loaded model.
         """
 
@@ -38,10 +45,15 @@ class ModelRepository:
         model = tf.keras.models.load_model(self.__base_dir / filename)
         return model
 
-    def save_model(self, model: AIModel, name: Optional[str] = None) -> None:
-
+    def store(self, model: AIModel, name: Optional[str] = None) -> None:
+        """
+            Stores a model to a file.
+            :param model: AIModel object representing the model to store.
+            :param name: string representing the filename of the model file.
+        """
+        # Figuring out the filename of the file
         if name is None:
-            name = f"{str(uuid.uuid4())}.keras"  # Random name if not provided
+            name = f"{str(uuid.uuid4())}.keras"  # Random filename if not provided
         else:
             # Checking already existing model
             if name is not None and (self.__base_dir / name).exists():

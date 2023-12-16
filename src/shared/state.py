@@ -1,4 +1,4 @@
-from controllers.domain.image_processing_service import ImageProcessingService
+from simulations.domain.services.image_processing_service import ImageProcessingService
 from shared.data_types import CameraReadingData
 
 

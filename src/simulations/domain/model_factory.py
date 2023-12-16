@@ -1,26 +1,31 @@
 import logging
-from typing import Optional
-
-from shared.actions import MovementActionFactory
-from shared.data_types import AIModel
+from typing import Tuple
 
 import tensorflow as tf
 
+from shared.data_types import AIModel
+from shared.domain.interfaces.factory import Factory
+from simulations.domain.action_space_factory import ActionSpaceFactory
 
-class ModelFactory:
 
-    def __init__(self):
-        # Debugging
-        self.__logger: logging.Logger = logging.getLogger('root')
+class ModelFactory(Factory):
+    """
+        Class that represents the factory for AI models.
+    """
 
-    def new_model(self) -> AIModel:
+    # Static attributes
+    input_shape: Tuple[int] = (1, 3)
+    __logger: logging.Logger = logging.getLogger('root')
+
+    @staticmethod
+    def new() -> AIModel:
         """
             Creates a new AI model.
             :return: AIModel object representing the new model.
         """
 
         # Input layer of the model
-        input_ = tf.keras.layers.Input(shape=(1, 3), dtype=tf.float64, name="input")
+        input_ = tf.keras.layers.Input(shape=ModelFactory.input_shape, dtype=tf.float64, name="input")
 
         # Appending all the layers of the model in a list
         model_layers = [tf.keras.layers.Dense(64, activation='relu', name="dense_1"),
@@ -30,7 +35,7 @@ class ModelFactory:
                         tf.keras.layers.Dense(16, activation='relu', name="s_dense_2"),
                         tf.keras.layers.Dropout(.5, input_shape=(8, 1), name="dropout_2"),
                         tf.keras.layers.Dense(8, activation='relu', name="xs_dense"),
-                        tf.keras.layers.Dense(MovementActionFactory.N_ACTIONS, activation='linear', name='output')]
+                        tf.keras.layers.Dense(ActionSpaceFactory.n_actions, activation='linear', name='output')]
 
         # Composing all the layers of the model
         out_ = input_
@@ -43,6 +48,6 @@ class ModelFactory:
                       metrics=tf.metrics.Accuracy())
 
         # Logging
-        self.__logger.info(f"New model created: {model.summary()}")
+        ModelFactory.__logger.info(f"New model created: {model.summary()}")
 
         return model
