@@ -6,13 +6,10 @@ from typing import Optional
 import cv2
 
 from shared.application.exceptions import WallHitException, FlippedRobotException
-from simulations.domain.action_space_factory import ActionSpaceFactory
-from simulations.domain.controllers.visual_AI_controller import VisualAIController
 from simulations.domain.controllers.visual_controller import VisualController
 from simulations.domain.services.image_processing_service import ImageProcessingService
 from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
 from simulations.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
-from simulations.infrastructure.model_repository import ModelRepository
 
 # Constants
 DEBUG = True
