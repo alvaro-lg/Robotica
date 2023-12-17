@@ -6,17 +6,21 @@ from typing import Optional
 import cv2
 
 from shared.application.exceptions import WallHitException, FlippedRobotException
+from simulations.domain.controllers.visual_AI_controller import VisualAIController
 from simulations.domain.controllers.visual_controller import VisualController
 from simulations.domain.services.image_processing_service import ImageProcessingService
+from simulations.domain.simulation_elements.pathway import Pathway
 from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
 from simulations.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
+from simulations.infrastructure.model_repository import ModelRepository
 
 # Constants
 DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
-MODEL_NAME = None
-MODELS_PATH = Path("models/Trained/V2")
+PATH_ID = "Path"
+MODEL_NAME = "d15ace17-2b18-4a64-918d-9cd49f7989a8.keras"
+MODELS_PATH = Path("models")
 
 
 class DemoService:
@@ -28,10 +32,13 @@ class DemoService:
         simulation: CoppeliaSimConnector = CoppeliaSimConnector.get_instance()
         if model_name is None:
             robot = Pioneer3DX(simulation, VisualController(), ROBOT_ID)
-            simulation.add_sim_element(robot)
         else:
-            # TODO Implement AI Controller demo
-            pass
+            repo = ModelRepository(models_path)
+            model = repo.load(model_name)
+            robot = Pioneer3DX(simulation, VisualAIController(model), ROBOT_ID)
+
+        #pathway = Pathway(simulation, PATH_ID)
+        simulation.add_sim_elements([robot])
 
         try:
             # Starting the simulation

@@ -64,10 +64,12 @@ class Pioneer3DX(SimulationPhysicalElement):
             Resets the robot to its initial state.
         """
         if shuffle:
-            x_bounds, y_bounds = self.__sim_connector.simulation_dims
+            '''x_bounds, y_bounds = self.__sim_connector.simulation_dims
             x = np.random.uniform(x_bounds[0], x_bounds[1]) * 0.8
             y = np.random.uniform(y_bounds[0], y_bounds[1]) * 0.8
-            self.__sim_connector.set_object_position(self.__robot_handler, (x, y, 0.15))
+            self.__sim_connector.set_object_position(self.__robot_handler, (x, y, 0.15))'''
+            # Only shuffling orientation
+            self.__sim_connector.set_object_position(self.__robot_handler, (0, 0, 0.15))
             self.__sim_connector.set_object_orientation(self.__robot_handler,
                                                         (0, 0, np.random.uniform(0, np.pi)))
         else:

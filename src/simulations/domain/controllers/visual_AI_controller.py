@@ -1,10 +1,13 @@
 from collections import deque
 from copy import deepcopy
 import random
+from datetime import datetime
 from typing import Optional, Any
 
 import numpy as np
+import tensorflow as tf
 
+from shared.action_space import ActionSpace
 from simulations.domain.controllers.visual_controller import VisualController
 from shared.actions import MovementAction
 from shared.data_types import AIModel, TransitionT
@@ -12,18 +15,24 @@ from shared.state import State
 
 # Constants
 REPLAY_MEMORY_SIZE = 3000  # How many last steps to keep for model training
-MIN_REPLAY_MEMORY_SIZE = 100  # Minimum number of steps in a memory to start training
-MINIBATCH_SIZE = 16  # How many steps (samples) to use for training
+MIN_REPLAY_MEMORY_SIZE = 1000  # Minimum number of steps in a memory to start training
+MINIBATCH_SIZE = 128  # How many steps (samples) to use for training
 DISCOUNT = 0.99  # Discount rate
 UPDATE_TARGET_EVERY = 20  # Terminal states (end of episodes)
 
 
 class VisualAIController(VisualController):
+    """
+        Class that implements the AI controller for the visual simulation.
+    """
 
     def __init__(self, model: AIModel):
-        super().__init__()
-
+        """
+            Constructor.
+            :param model: The model to be used by the controller.
+        """
         # Variables initialization
+        super().__init__()
         self.__model: AIModel = model
         self.__target_model: AIModel = deepcopy(self.__model)
         self.__replay_memory: deque = deque(maxlen=REPLAY_MEMORY_SIZE)
@@ -39,23 +48,22 @@ class VisualAIController(VisualController):
     def get_prediction(self, state: State, model: Optional[AIModel] = None) -> Any:
         """
             Returns the next action to be performed by the robot.
-            :param state:
-            :param model:
-            :return:
+            :param state: The current state of the robot.
+            :param model: The model to be used by the controller.
+            :return: The output of the model.
         """
-
         # Getting input for prediction
         x, y, area = state.x_norm, state.y_norm, state.area_norm
         input_data = np.array([[[x, y, area]]])
 
         # Predicting the output
         if model is None:
-            outputs = self.__model.predict(input_data, verbose=0)[0][0]
+            outputs = self.__model.predict(input_data, verbose=0)
         else:
-            outputs = model.predict(input_data, verbose=0)[0][0]
+            outputs = model.predict(input_data, verbose=0)
 
         # Returning the corresponding outputs
-        return outputs
+        return outputs[0][0]
 
     def train(self, terminal_state: bool) -> None:
         """
@@ -92,7 +100,7 @@ class VisualAIController(VisualController):
 
             # Update Q value for given state
             current_qs = current_qs_list[index]
-            current_qs[action.idx] = new_q
+            current_qs[ActionSpace.get_instance().actions.index(action)] = new_q
 
             # And append to our training data
             X.append([[current_state.x_norm, current_state.y_norm, current_state.area_norm]])
@@ -111,7 +119,7 @@ class VisualAIController(VisualController):
             self.__target_update_counter = 0
 
     def get_next_action(self, state: State) -> MovementAction:
-        return MovementAction(np.argmax(self.get_prediction(state)))
+        return ActionSpace.get_instance().actions[np.argmax(self.get_prediction(state))]
 
     # Properties
     @property

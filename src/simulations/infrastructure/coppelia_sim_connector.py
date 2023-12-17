@@ -28,46 +28,41 @@ class CoppeliaSimConnector(SimulationConnector):
         """
         if CoppeliaSimConnector._connector_instance is not None:  # Singleton implementation
             raise SingletonException()
-        else:
-            # Debugging
-            self.__logger: logging.Logger = logging.getLogger('root')
-            self.__logger.info("Connecting to CoppeliaSim...")
 
-            # Class attributes initialization
-            self.__sim = RemoteAPIClient().require('sim')
-            self.__idle_fps: int = self.__sim.getInt32Param(self.__sim.intparam_idle_fps)
-            self.__sim_elements: List[SimulationPhysicalElement] = []
+        # Debugging
+        self.__logger: logging.Logger = logging.getLogger('root')
+        self.__logger.info("Connecting to CoppeliaSim...")
+
+        # Class attributes initialization
+        self.__client = RemoteAPIClient()
+        self.__sim = self.__client.require('sim')
+        self.__idle_fps: int = self.__sim.getInt32Param(self.__sim.intparam_idle_fps)
+        self.__sim_elements: List[SimulationPhysicalElement] = []
 
     # Singleton implementation
     @classmethod
     def get_instance(cls):
         """
             Singleton implementation.
-            :return: the instance of the class.
+            :return: the _instance of the class.
         """
 
-        # Initializing the instance if it is not initialized yet
+        # Initializing the _instance if it is not initialized yet
         if cls._connector_instance is None:
             cls._connector_instance = CoppeliaSimConnector()
 
         return cls._connector_instance
 
     # Interface implementation
-    def start_simulation(self) -> None:
+    def start_simulation(self, stepping: bool = False) -> None:
         """
             Starts the simulation in CoppeliaSim.
         """
+        if stepping:
+            self.__client.setStepping(True)
         self.__logger.debug("Starting simulation...")
         self.__sim.setInt32Param(self.__idle_fps, 0)
         self.__sim.startSimulation()
-
-    def reset_simulation(self, shuffle: Optional[bool] = False) -> None:
-        """
-            Starts the simulation in CoppeliaSim.
-        """
-        self.__logger.debug("Resetting simulation...")
-        for sim_element in self.__sim_elements:
-            sim_element.reset(shuffle=shuffle)
 
     def stop_simulation(self) -> None:
         """
@@ -78,6 +73,20 @@ class CoppeliaSimConnector(SimulationConnector):
             time.sleep(0.1)
         self.__sim.setInt32Param(self.__sim.intparam_idle_fps, self.__idle_fps)
         self.__logger.debug("Simulation stopped...")
+
+    def step(self) -> None:
+        """
+            Steps the simulation.
+        """
+        self.__client.step()
+
+    def reset_simulation(self, shuffle: Optional[bool] = False) -> None:
+        """
+            Starts the simulation in CoppeliaSim.
+        """
+        self.__logger.debug("Resetting simulation...")
+        for sim_element in self.__sim_elements:
+            sim_element.reset(shuffle=shuffle)
 
     def is_running(self) -> bool:
         """
@@ -100,6 +109,14 @@ class CoppeliaSimConnector(SimulationConnector):
             :param sim_element: simulation element to be added.
         """
         self.__sim_elements.append(sim_element)
+
+    def add_sim_elements(self, sim_elements: List[SimulationPhysicalElement]) -> None:
+        """
+            Adds simulation elements to the simulation.
+            :param sim_elements: listo of simulation elements to be added.
+        """
+        for sim_element in sim_elements:
+            self.add_sim_element(sim_element)
 
     # Observer methods
     def get_object_handler(self, object_id: ObjectId) -> ObjectHandler:

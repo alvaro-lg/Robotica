@@ -27,7 +27,7 @@ class Pathway(SimulationLogicalElement):
 
         # Attributes initialization
         self.__sim_connector: CoppeliaSimConnector = sim_connector
-        self.__path_handler: ObjectHandler = self.__sim_connector.get_object_handler(path_id)
+        self.__path_handler: ObjectHandler = self.__sim_connector.get_object_handler(f"/{path_id}")
         self.__points_handlers: List[ObjectHandler] = []
         for id_ in range(Pathway.num_points):
             self.__points_handlers.append(
