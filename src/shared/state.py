@@ -12,12 +12,11 @@ class State:
 
         if len(contours) > 0:  # Ball in sight
             # Extract x-coordinate of the circle center
-            (center_x, center_y), area = ImageProcessingService.get_shape(img)
+            (center_x, _), area = ImageProcessingService.get_shape(img)
             len_x, len_y = img.shape[0], img.shape[1]
 
             # Calculating values
             self.__x_norm: float = center_x / len_x
-            self.__y_norm: float = center_y / len_y
             self.__area_norm: float = area / (len_x * len_y)
 
             self.__ball_in_sight: bool = True  # For speeding up checkings
@@ -25,21 +24,24 @@ class State:
 
             # Values for ball out of sight
             self.__x_norm: float = -1.0
-            self.__y_norm: float = -1.0
             self.__area_norm: float = 0.0
 
             self.__ball_in_sight: bool = False  # For speeding up checkings
 
     @property
     def x_norm(self) -> float:
+        """
+            Returns the normalized x-coordinate of the ball.
+            :return: float representing the normalized x-coordinate of the ball.
+        """
         return self.__x_norm
 
     @property
-    def y_norm(self) -> float:
-        return self.__y_norm
-
-    @property
     def area_norm(self) -> float:
+        """
+            Returns the normalized area of the ball.
+            :return: float representing the normalized area of the ball.
+        """
         return self.__area_norm
 
     def is_ball_in_sight(self) -> bool:

@@ -53,8 +53,8 @@ class VisualAIController(VisualController):
             :return: The output of the model.
         """
         # Getting input for prediction
-        x, y, area = state.x_norm, state.y_norm, state.area_norm
-        input_data = np.array([[[x, y, area]]])
+        x, area = state.x_norm, state.area_norm
+        input_data = np.array([[[x, area]]])
 
         # Predicting the output
         if model is None:
@@ -103,7 +103,7 @@ class VisualAIController(VisualController):
             current_qs[ActionSpace.get_instance().actions.index(action)] = new_q
 
             # And append to our training data
-            X.append([[current_state.x_norm, current_state.y_norm, current_state.area_norm]])
+            X.append([[current_state.x_norm, current_state.area_norm]])
             y.append([current_qs])
 
         # Fit on all samples as one batch, log only on terminal state

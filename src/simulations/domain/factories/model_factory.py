@@ -16,7 +16,7 @@ class ModelFactory(Factory):
     """
 
     # Static attributes
-    input_shape: Tuple[int] = (1, 3)
+    input_shape: Tuple[int] = (1, 2)
     __logger: logging.Logger = logging.getLogger('root')
 
     @staticmethod

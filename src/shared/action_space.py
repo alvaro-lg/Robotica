@@ -27,11 +27,12 @@ class ActionSpace(Sequence):
             raise SingletonException()
 
         self.__actions: List[MovementAction] = [
-            MovementAction((float(min(i / 0.5, 1)), float(min((1 - i) / 0.5, 1))))
-            for i in np.arange(0, 1, 1 / N_X_STEPS)] + [
-            MovementAction((-float(min(i / 0.5, 1)), -float(min((1 - i) / 0.5, 1))))
-            for i in np.arange(0, 1, 1 / N_X_STEPS)
+            MovementAction((min(i / 0.5, 1), min((1. - i) / 0.5, 1)))
+            for i in np.linspace(0, 1, N_X_STEPS, endpoint=True)] + [
+            MovementAction((max(i / 0.5, -1), max((1. - i) / 0.5, -1)))
+            for i in np.linspace(0, -1, N_X_STEPS, endpoint=True)
         ]
+
 
     @classmethod
     def get_instance(cls) -> 'ActionSpace':
