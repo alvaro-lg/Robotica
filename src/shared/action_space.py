@@ -8,7 +8,7 @@ from shared.actions import MovementAction
 from shared.infrastructure.exceptions import SingletonException
 
 # Constants
-N_X_STEPS: int = 5
+N_X_STEPS: int = 7
 
 
 class ActionSpace(Sequence):

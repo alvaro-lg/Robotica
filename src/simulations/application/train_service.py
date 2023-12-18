@@ -1,5 +1,4 @@
 import logging
-import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
@@ -28,12 +27,12 @@ MODELS_PATH = Path("models")
 LOG_DIR = 'log/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 100
+N_EPISODES = 200
 MEM_SIZE = 3000
 MAX_EPSILON = 1  # Maximum epsilon value
 MIN_EPSILON = 0.001  # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
-STEPS_PER_EPISODE = 100
+STEPS_PER_EPISODE = 150
 
 
 class TrainService:
@@ -68,12 +67,9 @@ class TrainService:
                 episode_total_reward = 0
                 episode_max_reward = -np.inf
                 episode_min_reward = np.inf
+                n_step = 0  # Warning-avoidance
 
                 for n_step in range(STEPS_PER_EPISODE):
-
-                    # Checking if robot is OK
-                    if robot.is_hitting_a_wall() or robot.is_flipped():
-                        simulation.reset_simulation()
 
                     if DISPLAY:
                         # Getting the camera readings, contours and circle
@@ -103,8 +99,11 @@ class TrainService:
                     # Performing the action, getting next state and calculating the reward
                     robot.perform_next_action(action=action)
                     simulation.step()  # Next step
-                    new_state = State(robot.get_camera_reading())
-                    reward = RewardService.get_reward(new_state)
+                    next_state = State(robot.get_camera_reading())
+                    reward = RewardService.get_reward(curr_state, next_state)
+
+                    # Forcing end of episode if proceeds
+                    force_end = robot.is_hitting_a_wall() or robot.is_flipped() or not next_state.is_ball_in_sight()
 
                     # Updating metrics
                     episode_total_reward += reward
@@ -112,17 +111,22 @@ class TrainService:
                     episode_min_reward = reward if reward < episode_min_reward else episode_min_reward
 
                     # Every step we update replay memory and train main network
-                    end_episode = n_step == STEPS_PER_EPISODE - 1
-                    controller.update_replay_memory((curr_state, action, reward, new_state, end_episode))
+                    end_episode = (n_step == STEPS_PER_EPISODE) - 1 or force_end
+                    controller.update_replay_memory((curr_state, action, reward, next_state, end_episode))
                     controller.train(end_episode)
+
+                    # Quitting if end of episode
+                    if force_end:
+                        logger.info(f"Episode: {episode} - FORCING QUIT")
+                        break
 
                 # End of episode
                 logger.info(f"Episode: {episode} - Avg. Reward: "
-                            f"{float(episode_total_reward) / float(STEPS_PER_EPISODE)} (min: {episode_min_reward}, "
+                            f"{float(episode_total_reward) / float(n_step + 1)} (min: {episode_min_reward}, "
                             f"max: {episode_max_reward}) - Epsilon: {epsilon}")
 
                 # Saving stats and saving model if proceeds
-                tf.summary.scalar('average_reward', float(episode_total_reward) / float(STEPS_PER_EPISODE), step=episode)
+                tf.summary.scalar('average_reward', float(episode_total_reward) / float(n_step + 1), step=episode)
                 tf.summary.scalar('max_reward', episode_max_reward, step=episode)
                 tf.summary.scalar('min_reward', episode_min_reward, step=episode)
 
@@ -143,6 +147,7 @@ class TrainService:
         simulation.stop_simulation()
         if DISPLAY:
             cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     # Setting logging format
