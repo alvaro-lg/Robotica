@@ -24,9 +24,9 @@ class ModelRepository(Repository):
 
         # Attribute checking
         if not base_dir.exists():
-            raise FileNotFoundError(f"Base directory {base_dir} does not exist")
+            raise FileNotFoundError(f"Base directory {base_dir.absolute()} does not exist")
         if not base_dir.is_dir():
-            raise FileExistsError(f"Base directory {base_dir} is not a directory")
+            raise FileExistsError(f"Base directory {base_dir.absolute()} is not a directory")
 
         # Attributes initialization
         self.__base_dir: Path = base_dir.resolve()

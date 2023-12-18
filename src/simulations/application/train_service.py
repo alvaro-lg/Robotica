@@ -1,4 +1,5 @@
 import logging
+import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
@@ -27,12 +28,12 @@ MODELS_PATH = Path("models")
 LOG_DIR = 'log/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 1000
+N_EPISODES = 100
 MEM_SIZE = 3000
 MAX_EPSILON = 1  # Maximum epsilon value
 MIN_EPSILON = 0.001  # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
-STEPS_PER_EPISODE = 1000
+STEPS_PER_EPISODE = 100
 
 
 class TrainService:
@@ -63,7 +64,7 @@ class TrainService:
             for episode in tqdm(range(N_EPISODES), ascii=True, unit='episodes'):
 
                 # Reset variables
-                simulation.reset_simulation(shuffle=True)
+                simulation.reset_simulation(shuffle=False)
                 episode_total_reward = 0
                 episode_max_reward = -np.inf
                 episode_min_reward = np.inf
@@ -107,7 +108,7 @@ class TrainService:
 
                     # Updating metrics
                     episode_total_reward += reward
-                    episode_max_reward = reward if reward > episode_max_reward else episode_min_reward
+                    episode_max_reward = reward if reward > episode_max_reward else episode_max_reward
                     episode_min_reward = reward if reward < episode_min_reward else episode_min_reward
 
                     # Every step we update replay memory and train main network
@@ -116,7 +117,9 @@ class TrainService:
                     controller.train(end_episode)
 
                 # End of episode
-                logger.info(f"Episode: {episode} - Reward: {episode_total_reward} - Epsilon: {epsilon}")
+                logger.info(f"Episode: {episode} - Avg. Reward: "
+                            f"{float(episode_total_reward) / float(STEPS_PER_EPISODE)} (min: {episode_min_reward}, "
+                            f"max: {episode_max_reward}) - Epsilon: {epsilon}")
 
                 # Saving stats and saving model if proceeds
                 tf.summary.scalar('average_reward', float(episode_total_reward) / float(STEPS_PER_EPISODE), step=episode)

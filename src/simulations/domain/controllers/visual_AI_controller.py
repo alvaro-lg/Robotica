@@ -14,11 +14,11 @@ from shared.data_types import AIModel, TransitionT
 from shared.state import State
 
 # Constants
-REPLAY_MEMORY_SIZE = 3000  # How many last steps to keep for model training
-MIN_REPLAY_MEMORY_SIZE = 1000  # Minimum number of steps in a memory to start training
-MINIBATCH_SIZE = 128  # How many steps (samples) to use for training
-DISCOUNT = 0.99  # Discount rate
-UPDATE_TARGET_EVERY = 20  # Terminal states (end of episodes)
+REPLAY_MEMORY_SIZE = 3000       # How many last steps to keep for model training
+MIN_REPLAY_MEMORY_SIZE = 100    # Minimum number of steps in a memory to start training
+MINIBATCH_SIZE = 16             # How many steps (samples) to use for training
+DISCOUNT = 0.99                 # Discount rate
+UPDATE_TARGET_EVERY = 20        # Terminal states (end of episodes)
 
 
 class VisualAIController(VisualController):

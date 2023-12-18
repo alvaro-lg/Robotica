@@ -1,4 +1,5 @@
 import logging
+import os
 from copy import copy
 from pathlib import Path
 from typing import Optional
@@ -19,7 +20,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "d15ace17-2b18-4a64-918d-9cd49f7989a8.keras"
+MODEL_NAME = "435de1af-76f2-4a9e-adcf-d85491caa7cd.keras"
 MODELS_PATH = Path("models")
 
 
