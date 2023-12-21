@@ -21,8 +21,8 @@ class VisualController(Controller):
 
     def get_next_action(self, state: State) -> MovementAction:
         """
-            Calculates the next action to perform based on the current state.
-            :param state: Actual state of the robot.
+            Calculates the next action to perform based on the current states.
+            :param state: Actual states of the robot.
             :return: The next action to perform.
         """
         if state.is_ball_in_sight():

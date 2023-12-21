@@ -3,7 +3,7 @@ from pathlib import Path
 from simulations.domain.factories.model_factory import ModelFactory
 from simulations.infrastructure.model_repository import ModelRepository
 
-MODEL_NAME = "model_1.keras"
+MODEL_NAME = "model"
 MODELS_PATH = Path("models")
 
 

@@ -8,7 +8,7 @@ from shared.actions import MovementAction
 from shared.infrastructure.exceptions import SingletonException
 
 # Constants
-N_X_STEPS: int = 7
+N_X_STEPS: int = 3
 
 
 class ActionSpace(Sequence):
@@ -28,11 +28,7 @@ class ActionSpace(Sequence):
 
         self.__actions: List[MovementAction] = [
             MovementAction((min(i / 0.5, 1), min((1. - i) / 0.5, 1)))
-            for i in np.linspace(0, 1, N_X_STEPS, endpoint=True)] + [
-            MovementAction((max(i / 0.5, -1), max((1. - i) / 0.5, -1)))
-            for i in np.linspace(0, -1, N_X_STEPS, endpoint=True)
-        ]
-
+            for i in np.linspace(0, 1, N_X_STEPS, endpoint=True)]
 
     @classmethod
     def get_instance(cls) -> 'ActionSpace':
@@ -67,4 +63,3 @@ class ActionSpace(Sequence):
 
     def __len__(self):
         return len(self.get_instance().actions)
-

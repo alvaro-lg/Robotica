@@ -2,6 +2,7 @@ cbor==1.0.0
 cbor2==5.5.1
 coppeliasim_zmqremoteapi_client==2.0.3
 gym==0.23.0
+keras==2.13.1
 numpy==1.26.2
 opencv-python==4.8.1.78
 pyzmq==25.1.2

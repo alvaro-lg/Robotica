@@ -9,12 +9,13 @@ import tensorflow as tf
 from tqdm import tqdm
 
 from shared.action_space import ActionSpace
+from shared.data_types import Transition
 from shared.state import State
 from simulations.domain.controllers.visual_AI_controller import VisualAIController
-from simulations.domain.factories.model_factory import ModelFactory
 from simulations.domain.services.image_processing_service import ImageProcessingService
 from simulations.domain.services.reward_service import RewardService
 from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
+from simulations.domain.simulation_elements.sphere import Sphere
 from simulations.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
 from simulations.infrastructure.model_repository import ModelRepository
 
@@ -22,12 +23,13 @@ from simulations.infrastructure.model_repository import ModelRepository
 DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
-MODEL_NAME = "model_1.keras"
+SPHERE_ID = "Sphere"
+MODEL_NAME = "model"
 MODELS_PATH = Path("models")
-LOG_DIR = 'log/' + datetime.now().strftime("%Y%m%d-%H%M%S")
+LOG_DIR = 'logs/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 200
+N_EPISODES = 300
 MEM_SIZE = 3000
 MAX_EPSILON = 1  # Maximum epsilon value
 MIN_EPSILON = 0.001  # Minimum epsilon value
@@ -46,8 +48,9 @@ class TrainService:
         model = repo.load(MODEL_NAME)
         controller = VisualAIController(model)
         robot = Pioneer3DX(simulation, controller, ROBOT_ID)
-        simulation.add_sim_element(robot)
-        tb_writer = tf.summary.create_file_writer(LOG_DIR)
+        sphere = Sphere(simulation, SPHERE_ID)
+        simulation.add_sim_elements([robot, sphere])
+        tb_writer = tf.summary.create_file_writer(f'{LOG_DIR}/reward')
         tb_writer.set_as_default()
 
         # Training-specific variables
@@ -55,19 +58,17 @@ class TrainService:
         best_reward = -np.inf
         action_space = ActionSpace.get_instance()
 
-        # Starting the simulation
-        simulation.start_simulation(stepping=True)
-
         try:
+
+            # Warning-avoidance
+            episode = 0
 
             for episode in tqdm(range(N_EPISODES), ascii=True, unit='episodes'):
 
                 # Reset variables
-                simulation.reset_simulation(shuffle=False)
+                simulation.start_simulation(stepping=True)
+                simulation.reset_simulation(shuffle=True)
                 episode_total_reward = 0
-                episode_max_reward = -np.inf
-                episode_min_reward = np.inf
-                n_step = 0  # Warning-avoidance
 
                 for n_step in range(STEPS_PER_EPISODE):
 
@@ -85,35 +86,40 @@ class TrainService:
                         cv2.imshow('Camera View', img_final_s)
                         cv2.waitKey(1)
 
-                    # Getting actual state
+                    # Getting actual states
                     curr_state = robot.get_state()
 
                     # Exploration-exploitation
-                    if np.random.random() > epsilon:
-                        # Get action from Q table
-                        action = action_space.actions[np.argmax(controller.get_prediction(curr_state))]
-                    else:
+                    if np.random.random() <= epsilon:
                         # Get random action
                         action = action_space.random_action()
+                    else:
+                        # Get action from Q table
+                        action = action_space.actions[np.argmax(controller.get_prediction(curr_state))]
 
-                    # Performing the action, getting next state and calculating the reward
+                    # Performing the action, getting next states and calculating the reward
                     robot.perform_next_action(action=action)
                     simulation.step()  # Next step
                     next_state = State(robot.get_camera_reading())
                     reward = RewardService.get_reward(curr_state, next_state)
 
                     # Forcing end of episode if proceeds
-                    force_end = robot.is_hitting_a_wall() or robot.is_flipped() or not next_state.is_ball_in_sight()
+                    has_lost_the_ball = curr_state.is_ball_in_sight() and not next_state.is_ball_in_sight()
+                    force_end = robot.is_hitting_a_wall() or robot.is_flipped() or has_lost_the_ball
 
                     # Updating metrics
                     episode_total_reward += reward
-                    episode_max_reward = reward if reward > episode_max_reward else episode_max_reward
-                    episode_min_reward = reward if reward < episode_min_reward else episode_min_reward
 
                     # Every step we update replay memory and train main network
-                    end_episode = (n_step == STEPS_PER_EPISODE) - 1 or force_end
-                    controller.update_replay_memory((curr_state, action, reward, next_state, end_episode))
-                    controller.train(end_episode)
+                    end_episode = (n_step == STEPS_PER_EPISODE - 1) or force_end
+                    transition = np.empty(1, dtype=Transition)
+                    transition['curr_state'] = np.array(curr_state)
+                    transition['action'] = action
+                    transition['reward'] = reward
+                    transition['next_state'] = np.array(next_state)
+                    transition['done'] = end_episode
+                    controller.update_replay_memory(transition)
+                    controller.train(end_episode, log_dir=LOG_DIR)
 
                     # Quitting if end of episode
                     if force_end:
@@ -121,24 +127,25 @@ class TrainService:
                         break
 
                 # End of episode
-                logger.info(f"Episode: {episode} - Avg. Reward: "
-                            f"{float(episode_total_reward) / float(n_step + 1)} (min: {episode_min_reward}, "
-                            f"max: {episode_max_reward}) - Epsilon: {epsilon}")
+                logger.info(f"Episode: {episode} - Epsilon: {epsilon} - Total Reward: {episode_total_reward}")
 
                 # Saving stats and saving model if proceeds
-                tf.summary.scalar('average_reward', float(episode_total_reward) / float(n_step + 1), step=episode)
-                tf.summary.scalar('max_reward', episode_max_reward, step=episode)
-                tf.summary.scalar('min_reward', episode_min_reward, step=episode)
+                tf.summary.scalar('total_reward', episode_total_reward, step=episode)
 
                 # Updating and saving if model improves
                 if episode_total_reward > best_reward:
                     best_reward = episode_total_reward
-                    repo.store(controller.model)
+                    repo.store(controller.model, f"{MODEL_NAME}_ep{episode}")
 
                 # Decay epsilon
                 if epsilon > MIN_EPSILON:
                     epsilon *= EPSILON_DECAY
                     epsilon = max(MIN_EPSILON, epsilon)
+
+                # Stopping the simulation
+                simulation.stop_simulation()
+
+            repo.store(controller.model, f"{MODEL_NAME}_ep{episode}")
 
         except KeyboardInterrupt:
             pass

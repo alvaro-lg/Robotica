@@ -65,7 +65,7 @@ class Pathway(SimulationLogicalElement):
 
     def reset(self, shuffle: Optional[bool] = False) -> None:
         """
-            Resets the object to its initial state.
+            Resets the object to its initial states.
             :param shuffle: boolean indicating whether the points should be shuffled.
         """
         if shuffle:

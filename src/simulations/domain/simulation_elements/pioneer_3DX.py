@@ -61,13 +61,9 @@ class Pioneer3DX(SimulationPhysicalElement):
 
     def reset(self, shuffle: Optional[bool] = False) -> None:
         """
-            Resets the robot to its initial state.
+            Resets the robot to its initial states.
         """
         if shuffle:
-            '''x_bounds, y_bounds = self.__sim_connector.simulation_dims
-            x = np.random.uniform(x_bounds[0], x_bounds[1]) * 0.8
-            y = np.random.uniform(y_bounds[0], y_bounds[1]) * 0.8
-            self.__sim_connector.set_object_position(self.__robot_handler, (x, y, 0.15))'''
             # Only shuffling orientation
             self.__sim_connector.set_object_position(self.__robot_handler, (0, 0, 0.15))
             self.__sim_connector.set_object_orientation(self.__robot_handler,
@@ -118,8 +114,8 @@ class Pioneer3DX(SimulationPhysicalElement):
 
     def get_state(self) -> State:
         """
-            Retrieves the state of the robot.
-            :return: a State object containing the state of the robot.
+            Retrieves the states of the robot.
+            :return: a State object containing the states of the robot.
         """
         return State(self.get_camera_reading())
 

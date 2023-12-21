@@ -37,6 +37,8 @@ class ModelRepository(Repository):
             :param filename: string representing the filename of the model file.
             :return: AIModel object representing the loaded model.
         """
+        # Adding extension
+        filename = f"{filename}.keras"
 
         if (self.__base_dir / filename).is_dir() or not (self.__base_dir / filename).exists():
             raise FileNotFoundError(f"File {filename} does not exist in {self.__base_dir}")
@@ -55,8 +57,11 @@ class ModelRepository(Repository):
         if name is None:
             name = f"{str(uuid.uuid4())}.keras"  # Random filename if not provided
         else:
+            # Adding extension
+            name = f"{name}.keras"
+
             # Checking already existing model
-            if name is not None and (self.__base_dir / name).exists():
+            if (self.__base_dir / name).exists():
                 raise FileExistsError(f"File {self.__base_dir / name} already exists")
 
         # Saving the model to a file

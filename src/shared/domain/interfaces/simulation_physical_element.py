@@ -24,6 +24,6 @@ class SimulationPhysicalElement(ABC):
     @abstractmethod
     def reset(self, shuffle: bool = False) -> None:
         """
-            Resets the object to its initial state.
+            Resets the object to its initial states.
         """
         pass

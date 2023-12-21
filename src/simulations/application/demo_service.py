@@ -20,7 +20,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "435de1af-76f2-4a9e-adcf-d85491caa7cd.keras"
+MODEL_NAME = "model_ep25_ep150"
 MODELS_PATH = Path("models")
 
 

@@ -30,14 +30,12 @@ class ModelFactory(Factory):
         input_ = tf.keras.layers.Input(shape=ModelFactory.input_shape, dtype=tf.float64, name="input")
 
         # Appending all the layers of the model in a list
-        model_layers = [tf.keras.layers.Dense(64, activation='relu', name="dense_1"),
-                        tf.keras.layers.Dense(64, activation='relu', name="dense_2"),
-                        tf.keras.layers.Dropout(.75, input_shape=(64, 1), name="dropout_1"),
+        model_layers = [tf.keras.layers.Dense(32, activation='relu', name="dense_1"),
+                        tf.keras.layers.Dropout(.75, input_shape=(32, 1), name="dropout_1"),
                         tf.keras.layers.Dense(32, activation='relu', name="s_dense_1"),
-                        tf.keras.layers.Dense(32, activation='relu', name="s_dense_2"),
                         tf.keras.layers.Dropout(.5, input_shape=(32, 1), name="dropout_2"),
                         tf.keras.layers.Dense(16, activation='relu', name="xs_dense_1"),
-                        tf.keras.layers.Dense(16, activation='relu', name="xs_dense_2"),
+                        tf.keras.layers.Dense(8, activation='relu', name="xs_dense_2"),
                         tf.keras.layers.Dense(len(ActionSpace.get_instance().actions), activation='linear',
                                               name='output')]
 
