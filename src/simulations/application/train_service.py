@@ -29,12 +29,11 @@ MODELS_PATH = Path("models")
 LOG_DIR = 'logs/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 300
-MEM_SIZE = 3000
-MAX_EPSILON = 1  # Maximum epsilon value
-MIN_EPSILON = 0.001  # Minimum epsilon value
+N_EPISODES = 100
+MAX_EPSILON = 1                                                 # Maximum epsilon value
+MIN_EPSILON = 0.001                                             # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
-STEPS_PER_EPISODE = 150
+STEPS_PER_EPISODE = 1000
 
 
 class TrainService:
@@ -103,15 +102,15 @@ class TrainService:
                     next_state = State(robot.get_camera_reading())
                     reward = RewardService.get_reward(curr_state, next_state)
 
-                    # Forcing end of episode if proceeds
-                    has_lost_the_ball = curr_state.is_ball_in_sight() and not next_state.is_ball_in_sight()
-                    force_end = robot.is_hitting_a_wall() or robot.is_flipped() or has_lost_the_ball
+                    # Forcing reset of episode if proceeds
+                    if robot.is_hitting_a_wall() or robot.is_flipped():
+                        simulation.reset_simulation(shuffle=True)
 
                     # Updating metrics
                     episode_total_reward += reward
 
                     # Every step we update replay memory and train main network
-                    end_episode = (n_step == STEPS_PER_EPISODE - 1) or force_end
+                    end_episode = n_step == STEPS_PER_EPISODE - 1
                     transition = np.empty(1, dtype=Transition)
                     transition['curr_state'] = np.array(curr_state)
                     transition['action'] = action
@@ -120,11 +119,6 @@ class TrainService:
                     transition['done'] = end_episode
                     controller.update_replay_memory(transition)
                     controller.train(end_episode, log_dir=LOG_DIR)
-
-                    # Quitting if end of episode
-                    if force_end:
-                        logger.info(f"Episode: {episode} - FORCING QUIT")
-                        break
 
                 # End of episode
                 logger.info(f"Episode: {episode} - Epsilon: {epsilon} - Total Reward: {episode_total_reward}")
@@ -147,7 +141,7 @@ class TrainService:
 
             repo.store(controller.model, f"{MODEL_NAME}_ep{episode}")
 
-        except KeyboardInterrupt:
+        except (Exception,):
             pass
 
         # Variables destruction

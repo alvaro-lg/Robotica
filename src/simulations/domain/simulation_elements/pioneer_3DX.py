@@ -20,7 +20,7 @@ class Pioneer3DX(SimulationPhysicalElement):
     num_sonar: int = 16
     max_sonar: int = 1
     max_speed: float = 5.
-    _distance_for_collision: float = 0.08
+    _distance_for_collision: float = 0.07
 
     def __init__(self, sim_connector: CoppeliaSimConnector, controller: RobotControllerT, robot_id: ObjectId):
         """
@@ -67,7 +67,7 @@ class Pioneer3DX(SimulationPhysicalElement):
             # Only shuffling orientation
             self.__sim_connector.set_object_position(self.__robot_handler, (0, 0, 0.15))
             self.__sim_connector.set_object_orientation(self.__robot_handler,
-                                                        (0, 0, np.random.uniform(0, np.pi)))
+                                                        (0, 0, np.random.uniform(0, 2 * np.pi)))
         else:
             self.__sim_connector.set_object_position(self.__robot_handler, (0., 0., 0.15))
             self.__sim_connector.set_object_orientation(self.__robot_handler,
@@ -196,4 +196,4 @@ class Pioneer3DX(SimulationPhysicalElement):
             Checks whether the robot is hitting a wall.
             :return: boolean: True if it is hitting a wall, False otherwise.
         """
-        return not all(sonar_measure > self._distance_for_collision for sonar_measure in self.get_sonars_readings())
+        return any(sonar_measure <= Pioneer3DX._distance_for_collision for sonar_measure in self.get_sonars_readings())

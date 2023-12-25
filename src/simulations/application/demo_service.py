@@ -20,7 +20,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "model_ep25_ep150"
+MODEL_NAME = "model_ep499"
 MODELS_PATH = Path("models")
 
 
@@ -51,6 +51,10 @@ class DemoService:
                 try:
                     # Performing the next action
                     robot.perform_next_action()
+
+                    # Resetting if proceeds
+                    if robot.is_hitting_a_wall() or robot.is_flipped():
+                        simulation.reset_simulation(shuffle=True)
 
                     if DISPLAY:
                         # Getting the camera readings, contours and circle

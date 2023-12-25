@@ -15,8 +15,8 @@ from shared.state import State
 
 # Constants
 REPLAY_MEMORY_SIZE = 3000       # How many last steps to keep for model training
-MIN_REPLAY_MEMORY_SIZE = 100    # Minimum number of steps in a memory to start training
-MINIBATCH_SIZE = 16             # How many steps (samples) to use for training
+MIN_REPLAY_MEMORY_SIZE = 1000   # Minimum number of steps in a memory to start training
+MINIBATCH_SIZE = 128            # How many steps (samples) to use for training
 DISCOUNT = 0.99                 # Discount rate
 UPDATE_TARGET_EVERY = 20        # Terminal states (end of episodes)
 
@@ -65,7 +65,7 @@ class VisualAIController(VisualController):
         # Returning the corresponding outputs
         return outputs[0][0]
 
-    def get_predictions(self, states: npt.NDArray, model: Optional[AIModel] = None) -> Any:
+    def _get_predictions(self, states: npt.NDArray, model: Optional[AIModel] = None) -> Any:
         """
             Returns the next actions to be performed by the robot.
             :param states: The states of the robot.
@@ -96,32 +96,24 @@ class VisualAIController(VisualController):
 
         # Get current states from minibatch, then query NN model for Q values
         curr_states = minibatch[:]['curr_state']
-        current_qs_list = self.get_predictions(curr_states)
+        current_qs_list = self._get_predictions(curr_states)
 
         # Get future states from minibatch, then query NN model for Q values
         next_states = minibatch[:]['next_state']
-        future_qs_list = self.get_predictions(next_states)
+        future_qs_list = self._get_predictions(next_states)
 
-        # Dataset initialization
-        X, y, =  np.empty((1, 1, State.n_features)),  np.empty((1, 1, len(ActionSpace.get_instance().actions)))
+        # Calculating new Q values
+        max_future_qs = np.max(future_qs_list, axis=2)
+        new_qs_list = minibatch[:]['reward'] + np.vectorize(int)(minibatch[:]['done']) * (DISCOUNT * max_future_qs)
+        actions_taken_idxs = np.vectorize(ActionSpace.get_instance().actions.index)(minibatch[:]['action'][0])
 
-        # Now we need to enumerate our batches
-        for index, minibatch_item in enumerate(minibatch):
+        # Indexing the current Q values with the actions taken
+        rows = np.arange(current_qs_list.shape[0])[:, None]
+        cols = np.zeros((current_qs_list.shape[0], 1), dtype=int)
+        actions_idxs = actions_taken_idxs[:, None]
 
-            # If not a terminal states, get new q from future states, otherwise set it to 0
-            if not minibatch_item['done']:
-                max_future_q = np.max(future_qs_list[index])
-                new_q = minibatch_item['reward'] + DISCOUNT * max_future_q
-            else:
-                new_q = minibatch_item['reward']
-
-            # Update Q value for given states
-            current_qs = current_qs_list[index]
-            current_qs[0][ActionSpace.get_instance().actions.index(minibatch_item['action'][0])] = new_q
-
-            # And append to our training data
-            X = np.vstack((X, [minibatch_item['curr_state']]))
-            y = np.vstack((y, [current_qs]))
+        # Updating the current Q values with the new Q values
+        current_qs_list[rows, cols, actions_idxs] = new_qs_list
 
         if log_dir is not None:
             callbacks = [keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)]
@@ -129,7 +121,8 @@ class VisualAIController(VisualController):
             callbacks = []
 
         # Fit on all samples as one batch, logs only on terminal states
-        self.__model.fit(x=np.array(X), y=np.array(y), batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False,
+        self.__model.fit(x=curr_states, y=current_qs_list, batch_size=MINIBATCH_SIZE, verbose=0,
+                         shuffle=False,
                          callbacks=callbacks)
 
         # Update target_area network counter every episode

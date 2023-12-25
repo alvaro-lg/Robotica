@@ -18,8 +18,8 @@ class RewardService:
         reward = 0
 
         # Penalizing lost of sight of the ball
-        if not next_state.is_ball_in_sight():
-            return reward
+        if curr_state.is_ball_in_sight() and not next_state.is_ball_in_sight():
+            return -10
 
         # Reinforcing the robot to keep the ball centered
         def norm(x: float, mean: float = 0.5, std_dev: float = 0.2) -> float:
@@ -29,8 +29,5 @@ class RewardService:
             else:
                 return 0.
         reward += norm(next_state.x_norm)
-
-        # Reinforcing the robot to get closer
-        reward *= next_state.area_norm
 
         return reward
