@@ -1,5 +1,5 @@
 import logging
-import os
+import tensorflow as tf
 from copy import copy
 from pathlib import Path
 from typing import Optional
@@ -20,7 +20,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "model_ep499"
+MODEL_NAME = "model_ep87"
 MODELS_PATH = Path("models")
 
 
@@ -35,7 +35,7 @@ class DemoService:
             robot = Pioneer3DX(simulation, VisualController(), ROBOT_ID)
         else:
             repo = ModelRepository(models_path)
-            model = repo.load(model_name)
+            model = repo.load_lite(model_name)
             robot = Pioneer3DX(simulation, VisualAIController(model), ROBOT_ID)
 
         #pathway = Pathway(simulation, PATH_ID)
@@ -54,7 +54,9 @@ class DemoService:
 
                     # Resetting if proceeds
                     if robot.is_hitting_a_wall() or robot.is_flipped():
-                        simulation.reset_simulation(shuffle=True)
+                        simulation.stop_simulation()
+                        simulation.start_simulation()
+                        simulation.reset_simulation(shuffle=False)
 
                     if DISPLAY:
                         # Getting the camera readings, contours and circle

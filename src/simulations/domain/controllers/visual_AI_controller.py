@@ -1,17 +1,20 @@
 from collections import deque
-from copy import deepcopy
+from copy import copy, deepcopy
 import random
+from pathlib import Path
 from typing import Optional, Any, Deque
 
 import keras
 import numpy as np
 import numpy.typing as npt
+import tensorflow as tf
 
 from shared.action_space import ActionSpace
 from simulations.domain.controllers.visual_controller import VisualController
 from shared.actions import MovementAction
 from shared.data_types import AIModel, Transition
 from shared.state import State
+from simulations.infrastructure.model_repository import ModelRepository
 
 # Constants
 REPLAY_MEMORY_SIZE = 3000       # How many last steps to keep for model training
@@ -34,7 +37,7 @@ class VisualAIController(VisualController):
         # Variables initialization
         super().__init__()
         self.__model: AIModel = model
-        self.__target_model: AIModel = deepcopy(self.__model)
+        self.__target_model: AIModel = copy(self.__model)
         self.__replay_memory: Deque[Transition] = deque(maxlen=REPLAY_MEMORY_SIZE)
         self.__target_update_counter: int = 0
 
@@ -54,13 +57,32 @@ class VisualAIController(VisualController):
         """
         # Getting input for prediction
         x, area = state.x_norm, state.area_norm
-        input_data = np.array([[[x, area]]])
+        input_data = np.array([[[x, area]]]).astype(np.float64)
 
         # Predicting the output
         if model is None:
-            outputs = self.__model.predict(input_data, verbose=0)
-        else:
+            model = self.__model
+
+        if isinstance(model, keras.models.Model):
             outputs = model.predict(input_data, verbose=0)
+        else:
+            # Create a new interpreter with the same configuration
+            interpreter = tf.lite.Interpreter(model_content=model)
+
+            # Allocate tensors for the new interpreter
+            interpreter.allocate_tensors()
+
+            # For TensorFlow Lite model prediction
+            input_details = interpreter.get_input_details()
+            output_details = interpreter.get_output_details()
+
+            # Perform inference
+            interpreter.allocate_tensors()
+            interpreter.set_tensor(input_details[0]['index'], tf.convert_to_tensor(input_data))
+            interpreter.invoke()
+
+            # Get the output tensor
+            outputs = interpreter.get_tensor(output_details[0]['index'])
 
         # Returning the corresponding outputs
         return outputs[0][0]
@@ -74,9 +96,12 @@ class VisualAIController(VisualController):
         """
         # Predicting the output
         if model is None:
-            outputs = self.__model.predict(states, verbose=0)
-        else:
+            model = self.__model
+
+        if isinstance(model, keras.models.Model):
             outputs = model.predict(states, verbose=0)
+        else:
+            raise NotImplementedError("This method is not implemented for this model type")
 
         # Returning the outputs
         return outputs

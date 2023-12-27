@@ -1,7 +1,7 @@
-from typing import TypeVar, List
+from typing import TypeVar, List, Union
 import numpy as np
-import numpy.typing as npt
 import tensorflow as tf
+import keras
 
 from shared.actions import MovementAction
 
@@ -20,7 +20,7 @@ Transition = np.dtype([
     ('next_state', np.float64, (2,)),   # StateT
     ('done',  np.bool_)                 # bool
 ])
-AIModel = tf.keras.models.Model
+AIModel = Union[keras.models.Model, bytes]
 CameraReadingData = np.ndarray
 SonarsReadingsData = List[float]
 LidarReadingData = List[float]

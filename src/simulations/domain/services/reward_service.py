@@ -28,6 +28,11 @@ class RewardService:
                 return (1 / (std_dev * np.sqrt(2 * np.pi))) * np.exp(-0.5 * ((x - mean) / std_dev) ** 2)
             else:
                 return 0.
-        reward += norm(next_state.x_norm)
+
+        def lin(x: float) -> float:
+            # Linear distribution for interpolating the reward with the center of the x-axis
+            return 1. - abs(0.5 - x) * 2.
+
+        reward += lin(next_state.x_norm)
 
         return reward

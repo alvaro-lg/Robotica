@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime
 from typing import Tuple
-from uuid import uuid4
 
+import keras
 import tensorflow as tf
 
 from shared.data_types import AIModel
@@ -27,16 +27,11 @@ class ModelFactory(Factory):
         """
 
         # Input layer of the model
-        input_ = tf.keras.layers.Input(shape=ModelFactory.input_shape, dtype=tf.float64, name="input")
+        input_ = keras.layers.Input(shape=ModelFactory.input_shape, dtype=tf.float64, name="input")
 
         # Appending all the layers of the model in a list
-        model_layers = [tf.keras.layers.Dense(32, activation='relu', name="dense_1"),
-                        tf.keras.layers.Dense(16, activation='relu', name="s_dense_1"),
-                        tf.keras.layers.Dropout(.5, input_shape=(16, 1), name="dropout_1"),
-                        tf.keras.layers.Dense(16, activation='relu', name="xs_dense_1"),
-                        tf.keras.layers.Dense(8, activation='relu', name="xs_dense_2"),
-                        tf.keras.layers.Dense(len(ActionSpace.get_instance().actions), activation='linear',
-                                              name='output')]
+        model_layers = [keras.layers.Dense(8, activation='relu', name="dense_1"),
+                        keras.layers.Dense(len(ActionSpace.get_instance().actions), activation='linear', name='output')]
 
         # Composing all the layers of the model
         out_ = input_
@@ -44,9 +39,9 @@ class ModelFactory(Factory):
             out_ = layer(out_)
 
         # Building the actual model
-        model = tf.keras.models.Model(inputs=input_, outputs=out_, name=datetime.now().strftime("%Y%m%d-%H%M%S"))
-        model.compile(tf.keras.optimizers.Adam(), loss=tf.keras.losses.MeanSquaredError(),
-                      metrics=tf.metrics.Accuracy())
+        model = keras.models.Model(inputs=input_, outputs=out_, name=datetime.now().strftime("%Y%m%d-%H%M%S"))
+        model.compile(keras.optimizers.Adam(), loss=keras.losses.MeanSquaredError(),
+                      metrics=keras.metrics.Accuracy())
 
         # Logging
         ModelFactory.__logger.info(f"New model created: {model.summary()}")

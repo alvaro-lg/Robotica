@@ -33,7 +33,7 @@ N_EPISODES = 100
 MAX_EPSILON = 1                                                 # Maximum epsilon value
 MIN_EPSILON = 0.001                                             # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
-STEPS_PER_EPISODE = 1000
+MAX_STEPS_PER_EPISODE = 1000
 
 
 class TrainService:
@@ -66,10 +66,10 @@ class TrainService:
 
                 # Reset variables
                 simulation.start_simulation(stepping=True)
-                simulation.reset_simulation(shuffle=True)
+                simulation.reset_simulation(shuffle=False)
                 episode_total_reward = 0
 
-                for n_step in range(STEPS_PER_EPISODE):
+                for n_step in range(MAX_STEPS_PER_EPISODE):
 
                     if DISPLAY:
                         # Getting the camera readings, contours and circle
@@ -91,7 +91,7 @@ class TrainService:
                     # Exploration-exploitation
                     if np.random.random() <= epsilon:
                         # Get random action
-                        action = action_space.random_action()
+                        action = action_space.get_instance().random_action()
                     else:
                         # Get action from Q table
                         action = action_space.actions[np.argmax(controller.get_prediction(curr_state))]
@@ -102,15 +102,15 @@ class TrainService:
                     next_state = State(robot.get_camera_reading())
                     reward = RewardService.get_reward(curr_state, next_state)
 
-                    # Forcing reset of episode if proceeds
-                    if robot.is_hitting_a_wall() or robot.is_flipped():
-                        simulation.reset_simulation(shuffle=True)
+                    # Forcing end of episode if proceeds
+                    has_lost_the_ball = curr_state.is_ball_in_sight() and not next_state.is_ball_in_sight()
+                    force_end = robot.is_hitting_a_wall() or robot.is_flipped() or has_lost_the_ball
 
                     # Updating metrics
                     episode_total_reward += reward
 
                     # Every step we update replay memory and train main network
-                    end_episode = n_step == STEPS_PER_EPISODE - 1
+                    end_episode = (n_step == MAX_STEPS_PER_EPISODE - 1) or force_end
                     transition = np.empty(1, dtype=Transition)
                     transition['curr_state'] = np.array(curr_state)
                     transition['action'] = action
@@ -119,6 +119,11 @@ class TrainService:
                     transition['done'] = end_episode
                     controller.update_replay_memory(transition)
                     controller.train(end_episode, log_dir=LOG_DIR)
+
+                    # Quitting if end of episode
+                    if force_end:
+                        logger.info(f"Episode: {episode} - FORCING QUIT")
+                        break
 
                 # End of episode
                 logger.info(f"Episode: {episode} - Epsilon: {epsilon} - Total Reward: {episode_total_reward}")

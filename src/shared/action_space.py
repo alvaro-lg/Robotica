@@ -26,9 +26,16 @@ class ActionSpace(Sequence):
         if ActionSpace._instance is not None:  # Singleton implementation
             raise SingletonException()
 
+        def interpolation(x: float) -> float:
+            if 0. <= x <= 0.5:
+                return min(x / 0.5, 1.)
+            else:
+                return min(-x + 1.5, 1.)
+
         self.__actions: List[MovementAction] = [
-            MovementAction((min(i / 0.5, 1), min((1. - i) / 0.5, 1)))
-            for i in np.linspace(0, 1, N_X_STEPS, endpoint=True)]
+            MovementAction((interpolation(i), interpolation(1 - i)))
+            for i in np.linspace(0, 1, N_X_STEPS, endpoint=True)
+        ]
 
     @classmethod
     def get_instance(cls) -> 'ActionSpace':

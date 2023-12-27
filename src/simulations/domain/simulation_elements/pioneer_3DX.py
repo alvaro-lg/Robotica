@@ -69,9 +69,8 @@ class Pioneer3DX(SimulationPhysicalElement):
             self.__sim_connector.set_object_orientation(self.__robot_handler,
                                                         (0, 0, np.random.uniform(0, 2 * np.pi)))
         else:
-            self.__sim_connector.set_object_position(self.__robot_handler, (0., 0., 0.15))
-            self.__sim_connector.set_object_orientation(self.__robot_handler,
-                                                        (0, 0, 0))
+            self.__sim_connector.set_object_position(self.__robot_handler, (3., -3., 0.15))
+            self.__sim_connector.set_object_orientation(self.__robot_handler, (0, 0, (5.5 * np.pi) / 12.))
 
     # Observer methods
     def get_motors_speeds_ratio(self) -> Tuple[float, float]:
