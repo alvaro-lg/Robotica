@@ -5,7 +5,7 @@ from pathlib import Path
 from simulations.domain.factories.model_factory import ModelFactory
 from simulations.infrastructure.model_repository import ModelRepository
 
-MODEL_NAME = "model_ep87"
+MODEL_NAME = "model_ep81"
 MODELS_PATH = Path("models")
 
 

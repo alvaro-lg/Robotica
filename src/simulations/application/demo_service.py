@@ -1,4 +1,6 @@
 import logging
+import time
+
 import tensorflow as tf
 from copy import copy
 from pathlib import Path
@@ -20,7 +22,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "model_ep87"
+MODEL_NAME = "model_ep81"
 MODELS_PATH = Path("models")
 
 
@@ -54,9 +56,7 @@ class DemoService:
 
                     # Resetting if proceeds
                     if robot.is_hitting_a_wall() or robot.is_flipped():
-                        simulation.stop_simulation()
-                        simulation.start_simulation()
-                        simulation.reset_simulation(shuffle=False)
+                        simulation.reset_simulation(shuffle=True)
 
                     if DISPLAY:
                         # Getting the camera readings, contours and circle
@@ -96,7 +96,8 @@ class DemoService:
             simulation.stop_simulation()
 
             # Variables destruction
-            cv2.destroyAllWindows()
+            if DISPLAY:
+                cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

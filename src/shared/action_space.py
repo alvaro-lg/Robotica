@@ -1,3 +1,4 @@
+import random
 from collections.abc import Sequence
 from random import choice
 from typing import List
@@ -8,7 +9,7 @@ from shared.actions import MovementAction
 from shared.infrastructure.exceptions import SingletonException
 
 # Constants
-N_X_STEPS: int = 3
+N_X_STEPS: int = 5
 
 
 class ActionSpace(Sequence):
@@ -18,6 +19,7 @@ class ActionSpace(Sequence):
 
     # Static attributes
     _instance: 'ActionSpace' = None  # Singleton implementation
+    __rnd = np.random.default_rng(2024)
 
     def __init__(self):
         """
@@ -26,11 +28,10 @@ class ActionSpace(Sequence):
         if ActionSpace._instance is not None:  # Singleton implementation
             raise SingletonException()
 
+        random.seed(10)
+
         def interpolation(x: float) -> float:
-            if 0. <= x <= 0.5:
-                return min(x / 0.5, 1.)
-            else:
-                return min(-x + 1.5, 1.)
+            return min(x / 0.5, 1.)
 
         self.__actions: List[MovementAction] = [
             MovementAction((interpolation(i), interpolation(1 - i)))
@@ -62,7 +63,7 @@ class ActionSpace(Sequence):
             Getter for the __actions attribute.
             :return: the __actions attribute.
         """
-        return choice(self.__actions)
+        return ActionSpace.__rnd.choice(self.__actions)
 
     # Interface implementation
     def __getitem__(self, index):

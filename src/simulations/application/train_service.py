@@ -1,4 +1,5 @@
 import logging
+import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
@@ -29,7 +30,7 @@ MODELS_PATH = Path("models")
 LOG_DIR = 'logs/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 100
+N_EPISODES = 300
 MAX_EPSILON = 1                                                 # Maximum epsilon value
 MIN_EPSILON = 0.001                                             # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
@@ -49,8 +50,9 @@ class TrainService:
         robot = Pioneer3DX(simulation, controller, ROBOT_ID)
         sphere = Sphere(simulation, SPHERE_ID)
         simulation.add_sim_elements([robot, sphere])
-        tb_writer = tf.summary.create_file_writer(f'{LOG_DIR}/reward')
+        tb_writer = tf.summary.create_file_writer(f'{LOG_DIR}/train')
         tb_writer.set_as_default()
+        rng = np.random.default_rng(2024)
 
         # Training-specific variables
         epsilon = MAX_EPSILON
@@ -89,7 +91,7 @@ class TrainService:
                     curr_state = robot.get_state()
 
                     # Exploration-exploitation
-                    if np.random.random() <= epsilon:
+                    if rng.random() <= epsilon:
                         # Get random action
                         action = action_space.get_instance().random_action()
                     else:
@@ -98,6 +100,7 @@ class TrainService:
 
                     # Performing the action, getting next states and calculating the reward
                     robot.perform_next_action(action=action)
+
                     simulation.step()  # Next step
                     next_state = State(robot.get_camera_reading())
                     reward = RewardService.get_reward(curr_state, next_state)
@@ -146,13 +149,13 @@ class TrainService:
 
             repo.store(controller.model, f"{MODEL_NAME}_ep{episode}")
 
-        except (Exception,):
-            pass
+        except (Exception, KeyboardInterrupt):
+            # Stopping the simulation
+            simulation.stop_simulation()
 
-        # Variables destruction
-        simulation.stop_simulation()
-        if DISPLAY:
-            cv2.destroyAllWindows()
+            # Variables destruction
+            if DISPLAY:
+                cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

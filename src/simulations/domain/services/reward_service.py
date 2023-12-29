@@ -1,14 +1,12 @@
-import math
 import numpy as np
 
-from shared.actions import MovementAction
 from shared.state import State
 
 
 class RewardService:
 
     @staticmethod
-    def get_reward(curr_state: State, next_state: State) -> int:
+    def get_reward(curr_state: State, next_state: State) -> float:
         """
         Returns the reward for the given states, action and next states.
         :param curr_state: State object representing the current states.
@@ -33,6 +31,6 @@ class RewardService:
             # Linear distribution for interpolating the reward with the center of the x-axis
             return 1. - abs(0.5 - x) * 2.
 
-        reward += lin(next_state.x_norm)
+        reward += norm(next_state.x_norm)
 
         return reward

@@ -30,7 +30,9 @@ class ModelFactory(Factory):
         input_ = keras.layers.Input(shape=ModelFactory.input_shape, dtype=tf.float64, name="input")
 
         # Appending all the layers of the model in a list
-        model_layers = [keras.layers.Dense(8, activation='relu', name="dense_1"),
+        model_layers = [keras.layers.Dense(16, activation='relu', name="dense_1"),
+                        keras.layers.Dropout(.2, input_shape=(16, 1), name="dropout_1"),
+                        keras.layers.Dense(8, activation='relu', name="s_dense_1"),
                         keras.layers.Dense(len(ActionSpace.get_instance().actions), activation='linear', name='output')]
 
         # Composing all the layers of the model
