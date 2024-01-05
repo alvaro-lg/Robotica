@@ -186,7 +186,7 @@ class CoppeliaSimConnector(SimulationConnector):
             :param object_handler: handler of the object.
             :return: a tuple containing the position of the object on the three axis.
         """
-        return self.__sim.getObjectPosition(object_handler)
+        return tuple(self.__sim.getObjectPosition(object_handler))
 
     # Setter (in the simulation) methods
     def set_joint_velocity(self, joint_handler: ObjectHandler, velocity: float) -> None:
@@ -205,9 +205,9 @@ class CoppeliaSimConnector(SimulationConnector):
         """
         # Checking if the position is valid
         if not isinstance(position, Tuple):
-            TypeError("Invalid positions types")
+            raise TypeError("Invalid positions types")
         if not all(isinstance(p, (float, int)) for p in position):
-            TypeError("Invalid position type")
+            raise TypeError("Invalid position type")
 
         self.__sim.setObjectPosition(object_handler, position)
 
@@ -219,8 +219,8 @@ class CoppeliaSimConnector(SimulationConnector):
         """
         # Checking if the orientation is valid
         if not isinstance(orientation, Tuple):
-            TypeError("Invalid orientations types")
+            raise TypeError("Invalid orientations types")
         if not all(isinstance(o, (float, int)) for o in orientation):
-            TypeError("Invalid orientation type")
+            raise TypeError("Invalid orientation type")
 
         self.__sim.setObjectOrientation(object_handler, orientation)

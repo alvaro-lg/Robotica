@@ -7,9 +7,10 @@ import numpy as np
 
 from shared.actions import MovementAction
 from shared.infrastructure.exceptions import SingletonException
+from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
 
 # Constants
-N_X_STEPS: int = 5
+N_X_STEPS: int = 3
 
 
 class ActionSpace(Sequence):
@@ -18,6 +19,7 @@ class ActionSpace(Sequence):
     """
 
     # Static attributes
+    _rotating_difference: float = 2
     _instance: 'ActionSpace' = None  # Singleton implementation
     __rnd = np.random.default_rng(2024)
 
@@ -31,7 +33,8 @@ class ActionSpace(Sequence):
         random.seed(10)
 
         def interpolation(x: float) -> float:
-            return min(x / 0.5, 1.)
+            return min((2. * ActionSpace._rotating_difference * x + Pioneer3DX.max_speed -
+                        ActionSpace._rotating_difference) / Pioneer3DX.max_speed, 1.)
 
         self.__actions: List[MovementAction] = [
             MovementAction((interpolation(i), interpolation(1 - i)))

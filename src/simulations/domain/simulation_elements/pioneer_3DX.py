@@ -5,7 +5,7 @@ from typing import Tuple, List, Optional
 
 from simulations.infrastructure.coppelia_sim_connector import CoppeliaSimConnector
 from shared.actions import MovementAction
-from shared.data_types import CameraReadingData, SonarsReadingsData, LidarReadingData, RobotControllerT, ActionT
+from shared.data_types import CameraReadingData, SonarsReadingsData, RobotControllerT, ActionT
 from shared.infrastructure.data_types import ObjectHandler, ObjectId
 from shared.domain.interfaces.simulation_physical_element import SimulationPhysicalElement
 from shared.state import State
@@ -65,9 +65,9 @@ class Pioneer3DX(SimulationPhysicalElement):
         """
         if shuffle:
             # Only shuffling orientation
-            self.__sim_connector.set_object_position(self.__robot_handler, (0, 0, 0.15))
-            self.__sim_connector.set_object_orientation(self.__robot_handler,
-                                                        (0, 0, np.random.uniform(0, 2 * np.pi)))
+            self.__sim_connector.set_object_position(self.__robot_handler,
+                                                     (np.random.uniform(-3., 2.5), 0, 0.15))
+            self.__sim_connector.set_object_orientation(self.__robot_handler, (0., 0., 0.))
         else:
             self.__sim_connector.set_object_position(self.__robot_handler, (-3., 0., 0.15))
             self.__sim_connector.set_object_orientation(self.__robot_handler, (0., 0., 0.))

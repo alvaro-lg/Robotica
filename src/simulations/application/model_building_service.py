@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from simulations.domain.factories.model_factory import ModelFactory
+from simulations.domain.model_factory import ModelFactory
 from simulations.infrastructure.model_repository import ModelRepository
 
 MODEL_NAME = "model"

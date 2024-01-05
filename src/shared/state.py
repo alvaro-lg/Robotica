@@ -8,6 +8,7 @@ class State(Sequence):
 
     # Class-static attributes
     n_features: int = 2
+    __last_state: 'State' = None
 
     def __init__(self, camera_reading: CameraReadingData):
 
@@ -28,10 +29,14 @@ class State(Sequence):
         else:  # Sphere out of sight
 
             # Values for ball out of sight
-            self.__x_norm: float = -1.0
+            self.__x_norm: float = 0.0 if (State.__last_state is not None and
+                                           State.__last_state.x_norm < 0.5) else 1.0  # Closer x boind to previous state
             self.__area_norm: float = 0.0
 
             self.__ball_in_sight: bool = False  # For speeding up checkings
+
+        # Updating last state
+        State.__last_state = self
 
     @property
     def x_norm(self) -> float:

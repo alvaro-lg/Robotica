@@ -75,8 +75,15 @@ class Pathway(SimulationLogicalElement):
                 positions.append(self.__sim_connector.get_object_position(point_handler))
 
             # Shuffling the points
-            random.shuffle(self.__points_handlers)
+            print(positions)
+            random.shuffle(positions)
+            print(positions)
 
             # Setting the new positions
             for point_handler, pos in zip(self.__points_handlers, positions):
                 self.__sim_connector.set_object_position(point_handler, pos)
+
+            positions = []
+            for point_handler in self.__points_handlers:
+                positions.append(self.__sim_connector.get_object_position(point_handler))
+            print(positions)

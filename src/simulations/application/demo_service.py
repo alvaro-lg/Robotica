@@ -1,7 +1,5 @@
 import logging
-import time
 
-import tensorflow as tf
 from copy import copy
 from pathlib import Path
 from typing import Optional
@@ -22,7 +20,7 @@ DEBUG = True
 DISPLAY = True
 ROBOT_ID = "PioneerP3DX"
 PATH_ID = "Path"
-MODEL_NAME = "model_ep81"
+MODEL_NAME = "model_ep321"
 MODELS_PATH = Path("models")
 
 
@@ -40,13 +38,13 @@ class DemoService:
             model = repo.load_lite(model_name)
             robot = Pioneer3DX(simulation, VisualAIController(model), ROBOT_ID)
 
-        #pathway = Pathway(simulation, PATH_ID)
-        simulation.add_sim_elements([robot])
+        pathway = Pathway(simulation, PATH_ID)
+        simulation.add_sim_elements([robot, pathway])
 
         try:
             # Starting the simulation
             simulation.start_simulation()
-            simulation.reset_simulation(shuffle=False)
+            simulation.reset_simulation(shuffle=True)
 
             # Running the simulation
             while simulation.is_running():

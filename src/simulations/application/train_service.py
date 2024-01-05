@@ -1,5 +1,4 @@
 import logging
-import time
 from copy import copy
 from datetime import datetime
 from pathlib import Path
@@ -30,10 +29,11 @@ MODELS_PATH = Path("models")
 LOG_DIR = 'logs/' + datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Training-specific constants
-N_EPISODES = 300
+N_EPISODES = 400
 MAX_EPSILON = 1                                                 # Maximum epsilon value
 MIN_EPSILON = 0.001                                             # Minimum epsilon value
 EPSILON_DECAY = MAX_EPSILON - (MAX_EPSILON / (0.8 * N_EPISODES))
+FRAMES_PER_STEP = 3
 MAX_STEPS_PER_EPISODE = 1000
 
 
@@ -50,7 +50,7 @@ class TrainService:
         robot = Pioneer3DX(simulation, controller, ROBOT_ID)
         sphere = Sphere(simulation, SPHERE_ID)
         simulation.add_sim_elements([robot, sphere])
-        tb_writer = tf.summary.create_file_writer(f'{LOG_DIR}/train')
+        tb_writer = tf.summary.create_file_writer(f'{LOG_DIR}/reward')
         tb_writer.set_as_default()
         rng = np.random.default_rng(2024)
 
@@ -68,7 +68,7 @@ class TrainService:
 
                 # Reset variables
                 simulation.start_simulation(stepping=True)
-                simulation.reset_simulation(shuffle=False)
+                simulation.reset_simulation(shuffle=True)
                 episode_total_reward = 0
 
                 for n_step in range(MAX_STEPS_PER_EPISODE):
@@ -100,8 +100,8 @@ class TrainService:
 
                     # Performing the action, getting next states and calculating the reward
                     robot.perform_next_action(action=action)
-
-                    simulation.step()  # Next step
+                    for _ in range(FRAMES_PER_STEP):
+                        simulation.step()  # Next step
                     next_state = State(robot.get_camera_reading())
                     reward = RewardService.get_reward(curr_state, next_state)
 
@@ -149,7 +149,8 @@ class TrainService:
 
             repo.store(controller.model, f"{MODEL_NAME}_ep{episode}")
 
-        except (Exception, KeyboardInterrupt):
+        except (Exception, KeyboardInterrupt) as e:
+
             # Stopping the simulation
             simulation.stop_simulation()
 
