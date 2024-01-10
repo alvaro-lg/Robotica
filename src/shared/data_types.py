@@ -9,7 +9,7 @@ from shared.actions import MovementAction
 RobotT = TypeVar('RobotT', bound='Pioneer3DX')
 ActionT = TypeVar('ActionT', bound='MovementAction')
 StateT = TypeVar('StateT', bound='State')
-RobotControllerT = TypeVar('RobotControllerT', bound='VisualController')
+RobotControllerT = TypeVar('RobotControllerT', bound='VisualAgent')
 MaskT = TypeVar('MaskT', bound='RedBallMask')
 
 # Custom types

@@ -10,7 +10,7 @@ import numpy.typing as npt
 import tensorflow as tf
 
 from shared.action_space import ActionSpace
-from simulations.domain.controllers.visual_controller import VisualController
+from simulations.domain.controllers.visual_agent import VisualAgent
 from shared.actions import MovementAction
 from shared.data_types import AIModel, Transition
 from shared.state import State
@@ -24,7 +24,7 @@ DISCOUNT = 0.99                 # Discount rate
 UPDATE_TARGET_EVERY = 20        # Terminal states (end of episodes)
 
 
-class VisualAIController(VisualController):
+class VisualDQNAgent(VisualAgent):
     """
         Class that implements the AI controller for the visual simulation.
     """

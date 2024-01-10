@@ -8,7 +8,7 @@ from shared.domain.interfaces.controller import Controller
 from shared.state import State
 
 
-class VisualController(Controller):
+class VisualAgent(Controller):
 
     # Static variables
     idle_speeds: Tuple[float, float] = -1.5, 1.5
@@ -53,7 +53,7 @@ class VisualController(Controller):
             self.__useless_steps += 1
 
             # Returning last action if there is one or idle action if not
-            if self.__last_action is None or self.__useless_steps >= VisualController.steps_for_idle:
-                return MovementAction(VisualController.idle_speeds)
+            if self.__last_action is None or self.__useless_steps >= VisualAgent.steps_for_idle:
+                return MovementAction(VisualAgent.idle_speeds)
             else:
                 return self.__last_action

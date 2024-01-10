@@ -1,1 +1,0 @@
-coppelia scenes/basic_scene.ttt -h

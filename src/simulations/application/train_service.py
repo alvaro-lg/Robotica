@@ -11,7 +11,7 @@ from tqdm import tqdm
 from shared.action_space import ActionSpace
 from shared.data_types import Transition
 from shared.state import State
-from simulations.domain.controllers.visual_AI_controller import VisualAIController
+from simulations.domain.controllers.visual_DQN_agent import VisualDQNAgent
 from simulations.domain.services.image_processing_service import ImageProcessingService
 from simulations.domain.services.reward_service import RewardService
 from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
@@ -46,7 +46,7 @@ class TrainService:
         simulation = CoppeliaSimConnector.get_instance()
         repo = ModelRepository(MODELS_PATH)
         model = repo.load(MODEL_NAME)
-        controller = VisualAIController(model)
+        controller = VisualDQNAgent(model)
         robot = Pioneer3DX(simulation, controller, ROBOT_ID)
         sphere = Sphere(simulation, SPHERE_ID)
         simulation.add_sim_elements([robot, sphere])

@@ -7,8 +7,8 @@ from typing import Optional
 import cv2
 
 from shared.application.exceptions import WallHitException, FlippedRobotException
-from simulations.domain.controllers.visual_AI_controller import VisualAIController
-from simulations.domain.controllers.visual_controller import VisualController
+from simulations.domain.controllers.visual_DQN_agent import VisualDQNAgent
+from simulations.domain.controllers.visual_agent import VisualAgent
 from simulations.domain.services.image_processing_service import ImageProcessingService
 from simulations.domain.simulation_elements.pathway import Pathway
 from simulations.domain.simulation_elements.pioneer_3DX import Pioneer3DX
@@ -32,11 +32,11 @@ class DemoService:
         # Variables initialization
         simulation: CoppeliaSimConnector = CoppeliaSimConnector.get_instance()
         if model_name is None:
-            robot = Pioneer3DX(simulation, VisualController(), ROBOT_ID)
+            robot = Pioneer3DX(simulation, VisualAgent(), ROBOT_ID)
         else:
             repo = ModelRepository(models_path)
             model = repo.load_lite(model_name)
-            robot = Pioneer3DX(simulation, VisualAIController(model), ROBOT_ID)
+            robot = Pioneer3DX(simulation, VisualDQNAgent(model), ROBOT_ID)
 
         pathway = Pathway(simulation, PATH_ID)
         simulation.add_sim_elements([robot, pathway])
